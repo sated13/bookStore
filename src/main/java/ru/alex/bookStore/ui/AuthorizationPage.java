@@ -1,12 +1,10 @@
 package ru.alex.bookStore.ui;
 
-import com.vaadin.annotations.Theme;
 import com.vaadin.server.VaadinRequest;
+import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
-import org.vaadin.spring.annotation.VaadinUI;
 
-@VaadinUI(path = "/rrrUser")
-//@Theme("Dark")
+@SpringUI(path = "/login")
 public class AuthorizationPage extends UI {
 
     @Override
@@ -18,6 +16,7 @@ public class AuthorizationPage extends UI {
         verticalPanel.addComponent((new Button("Click Me", (Button.ClickListener) clickEvent -> verticalPanel.addComponent(new Label("button was clicked")))));
         window.setContent(verticalPanel);
         window.center();
+        window.setResizable(false);
         window.setClosable(false);
         addWindow(window);
     }

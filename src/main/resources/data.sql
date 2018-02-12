@@ -101,7 +101,14 @@ insert into users(user_id, user_name, password) values(3, 'customer_1', 'passwor
 insert into users(user_id, user_name, password) values(4, 'customer_2', 'Password-4321');
 
 --user roles
-insert into user_roles(user_role_id, role) values();
+
+insert into user_roles (user_role_id, role) values(1, 'admin');
+insert into user_roles (user_role_id, role) values(2, 'not_destructive_actions_only');
+insert into user_roles (user_role_id, role) values(3, 'customer');
 
 --users_user_roles
-insert into users_user_roles(user_user_id, user_roles_user_role_id) values();
+
+insert into users_user_roles(user_user_id, user_roles_user_role_id) values(1, 1);
+insert into users_user_roles(user_user_id, user_roles_user_role_id) values(2, 2);
+insert into users_user_roles(user_user_id, user_roles_user_role_id) values(3, 3);
+insert into users_user_roles(user_user_id, user_roles_user_role_id) values(4, 3);

@@ -1,9 +1,6 @@
 package ru.alex.bookStore.entities;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -26,9 +23,8 @@ public class Book implements Serializable{
     @ElementCollection
     private Set<String> authors;
 
-    @ElementCollection
-    @OneToMany(targetEntity = BookCategory.class, fetch = FetchType.EAGER)
-    private Set<BookCategory> categories;
+    @ManyToMany(fetch = FetchType.EAGER)
+    private List<BookCategory> categories = new ArrayList<>();
     private Integer numberOfPages = 0;
     private Short year = 0;
     private String publishingHouse = "";
@@ -46,8 +42,8 @@ public class Book implements Serializable{
         return Collections.unmodifiableSet(authors);
     }
 
-    public Set<BookCategory> getCategories() {
-        return Collections.unmodifiableSet(categories);
+    public List<BookCategory> getCategories() {
+        return Collections.unmodifiableList(categories);
     }
 
     public Integer getNumberOfPages() {

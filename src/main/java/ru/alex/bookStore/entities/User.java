@@ -1,11 +1,9 @@
 package ru.alex.bookStore.entities;
 
-import org.hibernate.mapping.Collection;
-
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -17,13 +15,13 @@ public class User implements Serializable {
     private Long userId;
 
     @Column(nullable = false, length = 100)
-    String userName;
+    private String userName;
 
     @Column(nullable = false, length = 60)
-    String password;
+    private String password;
 
-    @OneToMany(fetch = FetchType.EAGER)
-    Set<UserRole> userRoles;
+    @ManyToMany(fetch = FetchType.EAGER)
+    private List<UserRole> userRoles;
 
     User() {}
 
@@ -43,8 +41,8 @@ public class User implements Serializable {
         this.password = password;
     }
 
-    public Set<UserRole> getUserRoles() {
-        return Collections.unmodifiableSet(userRoles);
+    public List<UserRole> getUserRoles() {
+        return Collections.unmodifiableList(userRoles);
     }
 
     public void addUserRoles(UserRole userRole) {
