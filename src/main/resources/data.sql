@@ -95,20 +95,22 @@ insert into books_categories values(31, 2);
 
 --users
 
-insert into users(user_id, user_name, password) values(1, 'admin', 'adminishe');
-insert into users(user_id, user_name, password) values(2, 'test', 'test');
-insert into users(user_id, user_name, password) values(3, 'customer_1', 'password-1234');
-insert into users(user_id, user_name, password) values(4, 'customer_2', 'Password-4321');
+insert into users(user_id, username, password) values(1, 'admin', '$2a$10$1HUIfBS2OWXwqNLjBmljEueZzAtrgfoUDn7TSdFf8rryjlhYvKcfS');//password: adminishe
+insert into users(user_id, username, password) values(2, 'test', '$2a$10$Cfd7VFPpYAyC6.Caih4JJep9gKgt8skzHHVvojt74Zu8hnSgZb0Ga');//password: test
+insert into users(user_id, username, password) values(3, 'customer_1', '$2a$10$.YpNXLtMLbRbw7hcbeVU3uq7tQp7gPZGtlwhQ1KNCIpK3F8lo9Rme');//password: password-1234
+insert into users(user_id, username, password) values(4, 'customer_2', '$2a$10$V1DRG8Za2Hb97lEgD7dGyO89zMf24YnUSTYjl1lLlNEsMe21LK8Da');//password: Password-4321
 
 --user roles
-
+/*
 insert into user_roles (user_role_id, role) values(1, 'admin');
 insert into user_roles (user_role_id, role) values(2, 'not_destructive_actions_only');
 insert into user_roles (user_role_id, role) values(3, 'customer');
-
+*/
 --users_user_roles
 
+/*
 insert into users_user_roles(user_user_id, user_roles_user_role_id) values(1, 1);
 insert into users_user_roles(user_user_id, user_roles_user_role_id) values(2, 2);
 insert into users_user_roles(user_user_id, user_roles_user_role_id) values(3, 3);
 insert into users_user_roles(user_user_id, user_roles_user_role_id) values(4, 3);
+*/

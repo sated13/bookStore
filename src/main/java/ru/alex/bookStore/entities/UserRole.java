@@ -1,11 +1,10 @@
 package ru.alex.bookStore.entities;
 
 import javax.persistence.*;
-import java.io.Serializable;
 
 @Entity
 @Table(name = "user_roles")
-public class UserRole implements Serializable {
+public class UserRole {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,7 +14,7 @@ public class UserRole implements Serializable {
     @Column(nullable = false, length = 45)
     String role;
 
-    UserRole() {}
+    public UserRole() {}
 
     public String getRole() {
         return role;

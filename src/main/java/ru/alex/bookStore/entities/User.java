@@ -1,13 +1,16 @@
 package ru.alex.bookStore.entities;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import javax.persistence.*;
-import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
-public class User implements Serializable {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,22 +18,22 @@ public class User implements Serializable {
     private Long userId;
 
     @Column(nullable = false, length = 100)
-    private String userName;
+    private String username;
 
     @Column(nullable = false, length = 60)
     private String password;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    private List<UserRole> userRoles;
+    private Set<UserRole> roles;
 
-    User() {}
+    public User() {}
 
-    public String getUserName() {
-        return userName;
+    public String getUsername() {
+        return username;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setUsername(String userName) {
+        this.username = userName;
     }
 
     public String getPassword() {
@@ -41,11 +44,15 @@ public class User implements Serializable {
         this.password = password;
     }
 
-    public List<UserRole> getUserRoles() {
-        return Collections.unmodifiableList(userRoles);
+    public Set<UserRole> getRoles() {
+        return Collections.unmodifiableSet(roles);
+    }
+
+    public void setRoles(Set<UserRole> roles) {
+        this.roles = roles;
     }
 
     public void addUserRoles(UserRole userRole) {
-        this.userRoles.add(userRole);
+        this.roles.add(userRole);
     }
 }
