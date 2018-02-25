@@ -20,7 +20,7 @@ public class User {
     @Column(nullable = false, length = 100)
     private String username;
 
-    @Column(nullable = false, length = 60)
+    @Column(nullable = false, length = 160)
     private String password;
 
     @ManyToMany(fetch = FetchType.EAGER)

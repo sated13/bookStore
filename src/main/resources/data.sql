@@ -6,6 +6,7 @@ insert into book_categories values(3, 'for dummies');
 insert into book_categories values(4, 'just reading');
 insert into book_categories values(5, 'improving skills');
 insert into book_categories values(6, 'category_6');
+commit;
 
 --books
 
@@ -40,6 +41,7 @@ insert into books(book_id, book_title, number_of_copies, number_of_pages, year, 
 insert into books(book_id, book_title, number_of_copies, number_of_pages, year, price) values(29, 'Working for an interesting company', 655, 122, 2016, 15);
 insert into books(book_id, book_title, number_of_copies, number_of_pages, year, price) values(30, 'How to pass all the tests', 4446, 666, 2009, 66);
 insert into books(book_id, book_title, number_of_copies, number_of_pages, year, price) values(31, 'Performance is not for us', 5600, 333, 2018, 31);
+commit;
 
 --book_categories
 
@@ -92,20 +94,25 @@ insert into books_categories values(28, 4);
 insert into books_categories values(29, 2);
 insert into books_categories values(30, 5);
 insert into books_categories values(31, 2);
+commit;
 
 --users
 
 insert into users(user_id, username, password) values(1, 'admin', '$2a$10$1HUIfBS2OWXwqNLjBmljEueZzAtrgfoUDn7TSdFf8rryjlhYvKcfS');//password: adminishe
-insert into users(user_id, username, password) values(2, 'test', '$2a$10$Cfd7VFPpYAyC6.Caih4JJep9gKgt8skzHHVvojt74Zu8hnSgZb0Ga');//password: test
+commit;
+INSERT INTO users(user_id, username, password) values(2, 'test', '$2a$10$JUR6XWi.KIixW0lFSevj7OWosw0DWOY9BtqZPtMf5DouJN7R8fHVS'); //test
+commit;
 insert into users(user_id, username, password) values(3, 'customer_1', '$2a$10$.YpNXLtMLbRbw7hcbeVU3uq7tQp7gPZGtlwhQ1KNCIpK3F8lo9Rme');//password: password-1234
+commit;
 insert into users(user_id, username, password) values(4, 'customer_2', '$2a$10$V1DRG8Za2Hb97lEgD7dGyO89zMf24YnUSTYjl1lLlNEsMe21LK8Da');//password: Password-4321
+commit;
 
 --user roles
-/*
+
 insert into user_roles (user_role_id, role) values(1, 'admin');
 insert into user_roles (user_role_id, role) values(2, 'not_destructive_actions_only');
 insert into user_roles (user_role_id, role) values(3, 'customer');
-*/
+commit;
 --users_user_roles
 
 /*

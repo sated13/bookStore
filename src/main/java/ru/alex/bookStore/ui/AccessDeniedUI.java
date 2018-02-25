@@ -12,7 +12,7 @@ public class AccessDeniedUI extends UI{
         Window window = new Window("Authorization");
 
         final VerticalLayout verticalPanel = new VerticalLayout();
-        verticalPanel.addComponent(new TextField("", "Access denied"));
+        verticalPanel.addComponent(new Label( "Access denied"));
 
         window.center();
         window.setResizable(false);
