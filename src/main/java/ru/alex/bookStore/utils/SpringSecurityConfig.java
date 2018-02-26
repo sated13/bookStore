@@ -21,10 +21,13 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
-                .exceptionHandling().authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))//.accessDeniedPage("/accessDenied")
+                .exceptionHandling().authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")).accessDeniedPage("/accessDenied")
                 .and()
                 .authorizeRequests()
-                .antMatchers("/VAADIN/**", "/PUSH/**", "/login", "/login/**", "/error/**", "/accessDenied/**", "/vaadinServlet/**", "/h2-console", "/h2-console/**", "/register")
+                .antMatchers("/VAADIN/**", "/PUSH/**", "/login",
+                        "/login/**", "/error/**", "/accessDenied/**",
+                        "/vaadinServlet/**", "/h2-console", "/h2-console/**",
+                        "/register", "/main")
                 .permitAll()
                 .antMatchers("/**").fullyAuthenticated()
                 .and()

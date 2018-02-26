@@ -115,9 +115,7 @@ insert into user_roles (user_role_id, role) values(3, 'customer');
 commit;
 --users_user_roles
 
-/*
-insert into users_user_roles(user_user_id, user_roles_user_role_id) values(1, 1);
-insert into users_user_roles(user_user_id, user_roles_user_role_id) values(2, 2);
-insert into users_user_roles(user_user_id, user_roles_user_role_id) values(3, 3);
-insert into users_user_roles(user_user_id, user_roles_user_role_id) values(4, 3);
-*/
+insert into users_roles(user_user_id, roles_user_role_id) values(1, 1);
+insert into users_roles(user_user_id, roles_user_role_id) values(2, 2);
+insert into users_roles(user_user_id, roles_user_role_id) values(3, 3);
+insert into users_roles(user_user_id, roles_user_role_id) values(4, 3);
