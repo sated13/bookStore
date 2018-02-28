@@ -14,9 +14,4 @@ public class AuthorizationUI extends BaseUI {
         setAuthorizationUIflag(true);
         createForm("authorization", vaadinRequest);
     }
-
-    @Override
-    protected void loginButtonClick(Button.ClickEvent e) {
-        super.loginButtonClick(e);
-    }
 }

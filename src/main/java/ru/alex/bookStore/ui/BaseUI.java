@@ -27,10 +27,6 @@ public class BaseUI extends UI {
     @Autowired
     private SecurityService securityService;
 
-    Button loginButtonBase = new Button("Login", this::loginButtonBaseClick);
-    Button registerButtonBase = new Button("Register", this::registerButtonBaseClick);
-    Button logoutButtonBase = new Button("Logout", this::logoutButtonClicked);
-
     Button loginButton = new Button("Login", this::loginButtonClick);
     Button registerButton = new Button("Register", this::registerButtonClick);
 
@@ -40,31 +36,9 @@ public class BaseUI extends UI {
     protected VaadinRequest localVaadinRequest;
     private Boolean authorizationUIflag = false;
     private Boolean registrationUIflag = false;
-    private final String anonymousUser = "anonymousUser";
 
     @Override
-    protected void init(VaadinRequest vaadinRequest) {
-        localVaadinRequest = vaadinRequest;
-
-        Boolean isAuthenticated = !anonymousUser.equals(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-
-        Window window = new Window();
-
-        VerticalLayout components = new VerticalLayout();
-
-        HorizontalLayout horizontalPanelForButtons = new HorizontalLayout();
-
-        horizontalPanelForButtons.addComponent(loginButtonBase);
-        horizontalPanelForButtons.addComponent(registerButtonBase);
-        if (isAuthenticated) horizontalPanelForButtons.addComponent(logoutButtonBase);
-
-        components.addComponent(horizontalPanelForButtons);
-        window.setContent(components);
-        window.setSizeFull();
-        window.setResizable(false);
-        window.setClosable(false);
-        addWindow(window);
-    }
+    protected void init(VaadinRequest vaadinRequest) { }
 
     protected void createForm(String formName, VaadinRequest vaadinRequest) {
         localVaadinRequest = vaadinRequest;
@@ -137,16 +111,6 @@ public class BaseUI extends UI {
         addWindow(window);
     }
 
-    private void logoutButtonClicked(Button.ClickEvent e) {
-        SecurityContextHolder.clearContext();
-        //redirect to login page
-        getPage().setLocation("/logout");
-    }
-
-    private void loginButtonBaseClick(Button.ClickEvent e) {
-        createAuthorizationFrom(localVaadinRequest);
-    }
-
     protected void loginButtonClick(Button.ClickEvent e) {
         try {
             UserDetails userDetails = userDetailsService.loadUserByUsername(usernameField.getValue());
@@ -170,10 +134,6 @@ public class BaseUI extends UI {
         catch (Exception exp) {
             exp.printStackTrace();
         }
-    }
-
-    private void registerButtonBaseClick(Button.ClickEvent e) {
-        createRegistrationForm(localVaadinRequest);
     }
 
     protected void registerButtonClick(Button.ClickEvent e) {

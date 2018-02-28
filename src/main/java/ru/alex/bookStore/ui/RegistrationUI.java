@@ -12,9 +12,4 @@ public class RegistrationUI extends BaseUI {
         setRegistrationUIflag(true);
         createForm("register", vaadinRequest);
     }
-
-    @Override
-    protected void registerButtonClick(Button.ClickEvent e) {
-        super.registerButtonClick(e);
-    }
 }
