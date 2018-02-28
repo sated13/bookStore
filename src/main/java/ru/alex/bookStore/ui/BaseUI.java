@@ -38,10 +38,15 @@ public class BaseUI extends UI {
     PasswordField passwordField = new PasswordField("Password", "");
     PasswordField confirmPasswordField = new PasswordField("Confirm password", "");
     protected VaadinRequest localVaadinRequest;
+    private Boolean authorizationUIflag = false;
+    private Boolean registrationUIflag = false;
+    private final String anonymousUser = "anonymousUser";
 
     @Override
     protected void init(VaadinRequest vaadinRequest) {
         localVaadinRequest = vaadinRequest;
+
+        Boolean isAuthenticated = !anonymousUser.equals(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
 
         Window window = new Window();
 
@@ -51,7 +56,7 @@ public class BaseUI extends UI {
 
         horizontalPanelForButtons.addComponent(loginButtonBase);
         horizontalPanelForButtons.addComponent(registerButtonBase);
-        horizontalPanelForButtons.addComponent(logoutButtonBase);
+        if (isAuthenticated) horizontalPanelForButtons.addComponent(logoutButtonBase);
 
         components.addComponent(horizontalPanelForButtons);
         window.setContent(components);
@@ -84,7 +89,7 @@ public class BaseUI extends UI {
         HorizontalLayout horizontalPanelForButtons = new HorizontalLayout();
 
         horizontalPanelForButtons.addComponent(loginButton);
-        //horizontalPanelForButtons.addComponent(registerButton);
+        if (authorizationUIflag) horizontalPanelForButtons.addComponent(registerButton);
 
         components.addComponent(horizontalPanelForButtons);
         components.setSizeUndefined();
@@ -100,7 +105,7 @@ public class BaseUI extends UI {
         window.setContent(createAuthorizationForm());
         window.center();
         window.setResizable(false);
-        window.setClosable(false);
+        if (authorizationUIflag) window.setClosable(false);
 
         addWindow(window);
     }
@@ -127,7 +132,7 @@ public class BaseUI extends UI {
         window.setContent(createRegistrationForm());
         window.center();
         window.setResizable(false);
-        window.setClosable(false);
+        if (registrationUIflag) window.setClosable(false);
 
         addWindow(window);
     }
@@ -143,22 +148,27 @@ public class BaseUI extends UI {
     }
 
     protected void loginButtonClick(Button.ClickEvent e) {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(usernameField.getValue());
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken;
+        try {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(usernameField.getValue());
+            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken;
 
-        if (passwordEncoder.matches(passwordField.getValue(), userDetails.getPassword())) {
-            usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(usernameField.getValue(), passwordField.getValue(), userDetails.getAuthorities());
-            authenticationManager.authenticate(usernamePasswordAuthenticationToken);
+            if (passwordEncoder.matches(passwordField.getValue(), userDetails.getPassword())) {
+                usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(usernameField.getValue(), passwordField.getValue(), userDetails.getAuthorities());
+                authenticationManager.authenticate(usernamePasswordAuthenticationToken);
 
-            if (usernamePasswordAuthenticationToken.isAuthenticated()) {
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                if (usernamePasswordAuthenticationToken.isAuthenticated()) {
+                    SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                }
+
+                //redirect to main page
+                getPage().setLocation("/main");
+            } else {
+                //make proper validation of password
+                getPage().setLocation("/accessDenied");
             }
-
-            //redirect to main page
-            //getPage().setLocation("/main");
-        } else {
-            //make proper validation of password
-            getPage().setLocation("/accessDenied");
+        }
+        catch (Exception exp) {
+            exp.printStackTrace();
         }
     }
 
@@ -178,9 +188,17 @@ public class BaseUI extends UI {
             securityService.autoLogin(usernameField.getValue(), passwordField.getValue());
 
             //redirect to main page
-            //getPage().setLocation("/main");
+            getPage().setLocation("/main");
         } else {
             //error message
         }
     }
+
+    public Boolean isAuthorizationUI() { return authorizationUIflag; }
+
+    public void setAuthorizationUIflag (Boolean flag) { authorizationUIflag = flag; }
+
+    public Boolean isRegistrationUI() { return registrationUIflag; }
+
+    public void setRegistrationUIflag (Boolean flag) { registrationUIflag = flag; }
 }
