@@ -29,6 +29,8 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                         "/vaadinServlet/**", "/h2-console", "/h2-console/**",
                         "/register", "/main")
                 .permitAll()
+                //make for users with 'admin' role
+                .antMatchers("/adminPanel", "/adminPanel/**").permitAll()
                 .antMatchers("/**").fullyAuthenticated()
                 .and()
                 .logout().permitAll();

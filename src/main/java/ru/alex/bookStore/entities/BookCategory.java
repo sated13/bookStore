@@ -5,7 +5,7 @@ import java.io.Serializable;
 
 @Entity
 @Table(name = "book_categories")
-public class BookCategory implements Serializable{
+public class BookCategory implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,7 +13,8 @@ public class BookCategory implements Serializable{
     private Long bookCategoryId;
     private String category = "";
 
-    public BookCategory() { }
+    public BookCategory() {
+    }
 
     public String getCategory() {
         return category;
@@ -21,5 +22,10 @@ public class BookCategory implements Serializable{
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    @Override
+    public String toString() {
+        return category;
     }
 }

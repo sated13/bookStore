@@ -9,7 +9,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.util.StringUtils;
 import ru.alex.bookStore.entities.User;
 import ru.alex.bookStore.utils.SecurityService;
 import ru.alex.bookStore.utils.UserService;
@@ -29,6 +28,7 @@ public class BaseUI extends UI {
 
     Button loginButton = new Button("Login", this::loginButtonClick);
     Button registerButton = new Button("Register", this::registerButtonClick);
+    Button resisterOnAuthorizationUIButton = new Button("Register", this::resisterOnAuthorizationUIButtonClick);
 
     TextField usernameField = new TextField("Login", "");
     PasswordField passwordField = new PasswordField("Password", "");
@@ -38,7 +38,8 @@ public class BaseUI extends UI {
     private Boolean registrationUIflag = false;
 
     @Override
-    protected void init(VaadinRequest vaadinRequest) { }
+    protected void init(VaadinRequest vaadinRequest) {
+    }
 
     protected void createForm(String formName, VaadinRequest vaadinRequest) {
         localVaadinRequest = vaadinRequest;
@@ -49,7 +50,7 @@ public class BaseUI extends UI {
                 break;
             }
             case "authorization": {
-                createAuthorizationFrom(vaadinRequest);
+                createAuthorizationForm(vaadinRequest);
                 break;
             }
         }
@@ -63,7 +64,7 @@ public class BaseUI extends UI {
         HorizontalLayout horizontalPanelForButtons = new HorizontalLayout();
 
         horizontalPanelForButtons.addComponent(loginButton);
-        if (authorizationUIflag) horizontalPanelForButtons.addComponent(registerButton);
+        if (authorizationUIflag) horizontalPanelForButtons.addComponent(resisterOnAuthorizationUIButton);
 
         components.addComponent(horizontalPanelForButtons);
         components.setSizeUndefined();
@@ -71,9 +72,9 @@ public class BaseUI extends UI {
         return components;
     }
 
-    private void createAuthorizationFrom(VaadinRequest vaadinRequest) {
+    private void createAuthorizationForm(VaadinRequest vaadinRequest) {
         Window window;
-        window = (StringUtils.startsWithIgnoreCase(vaadinRequest.getPathInfo(), "/login")) ? new Window("Authorization") :
+        window = (AuthorizationUI.class.equals(getPage().getUI().getClass())) ? new Window("Authorization") :
                 new Window();
 
         window.setContent(createAuthorizationForm());
@@ -100,7 +101,7 @@ public class BaseUI extends UI {
         localVaadinRequest = vaadinRequest;
 
         Window window;
-        window = (StringUtils.startsWithIgnoreCase(vaadinRequest.getPathInfo(), "/register")) ? new Window("Register new user") :
+        window = (RegistrationUI.class.equals(getPage().getUI().getClass())) ? new Window("Register new user") :
                 new Window();
 
         window.setContent(createRegistrationForm());
@@ -130,8 +131,7 @@ public class BaseUI extends UI {
                 //make proper validation of password
                 getPage().setLocation("/accessDenied");
             }
-        }
-        catch (Exception exp) {
+        } catch (Exception exp) {
             exp.printStackTrace();
         }
     }
@@ -154,11 +154,23 @@ public class BaseUI extends UI {
         }
     }
 
-    public Boolean isAuthorizationUI() { return authorizationUIflag; }
+    protected void resisterOnAuthorizationUIButtonClick(Button.ClickEvent e) {
+        getPage().setLocation("/register");
+    }
 
-    public void setAuthorizationUIflag (Boolean flag) { authorizationUIflag = flag; }
+    public Boolean isAuthorizationUI() {
+        return authorizationUIflag;
+    }
 
-    public Boolean isRegistrationUI() { return registrationUIflag; }
+    public void setAuthorizationUIflag(Boolean flag) {
+        authorizationUIflag = flag;
+    }
 
-    public void setRegistrationUIflag (Boolean flag) { registrationUIflag = flag; }
+    public Boolean isRegistrationUI() {
+        return registrationUIflag;
+    }
+
+    public void setRegistrationUIflag(Boolean flag) {
+        registrationUIflag = flag;
+    }
 }

@@ -22,7 +22,8 @@ public class User {
     @ManyToMany(fetch = FetchType.EAGER)
     private Set<UserRole> roles;
 
-    public User() {}
+    public User() {
+    }
 
     public String getUsername() {
         return username;
@@ -50,5 +51,10 @@ public class User {
 
     public void addUserRoles(UserRole userRole) {
         this.roles.add(userRole);
+    }
+
+    @Override
+    public String toString() {
+        return username;
     }
 }

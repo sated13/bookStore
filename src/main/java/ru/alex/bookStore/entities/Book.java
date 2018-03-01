@@ -1,5 +1,8 @@
 package ru.alex.bookStore.entities;
 
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
 import javax.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -10,7 +13,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "books")
-public class Book implements Serializable{
+public class Book implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +23,7 @@ public class Book implements Serializable{
     @Column(nullable = false)
     private String bookTitle = "";
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> authors;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -32,7 +35,8 @@ public class Book implements Serializable{
     private Integer numberOfCopies = 0;
     private Byte[] pictureOfBookCover;
 
-    public Book() {}
+    public Book() {
+    }
 
     public String getBookTitle() {
         return bookTitle;
@@ -106,5 +110,15 @@ public class Book implements Serializable{
 
     public void setPictureOfBookCover(Byte[] pictureOfBookCover) {
         this.pictureOfBookCover = pictureOfBookCover;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        result
+                .append(StringUtils.collectionToCommaDelimitedString(authors))
+                .append(" ")
+                .append(bookTitle);
+        return result.toString();
     }
 }

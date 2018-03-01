@@ -36,8 +36,7 @@ public class SecurityServiceImpl implements SecurityService {
             if (usernamePasswordAuthenticationToken.isAuthenticated()) {
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace(System.out);
         }
     }

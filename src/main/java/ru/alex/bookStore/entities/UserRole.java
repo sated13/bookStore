@@ -14,7 +14,8 @@ public class UserRole {
     @Column(nullable = false, length = 45)
     String role;
 
-    public UserRole() {}
+    public UserRole() {
+    }
 
     public String getRole() {
         return role;
@@ -22,5 +23,10 @@ public class UserRole {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    @Override
+    public String toString() {
+        return role;
     }
 }
