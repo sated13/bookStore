@@ -128,10 +128,10 @@ public class BaseUI extends UI {
                 //redirect to main page
                 getPage().setLocation("/main");
             } else {
-                //make proper validation of password
-                getPage().setLocation("/accessDenied");
+                Notification.show("Wrong credentials!", Notification.Type.ERROR_MESSAGE);
             }
         } catch (Exception exp) {
+            Notification.show("Wrong credentials!", Notification.Type.ERROR_MESSAGE);
             exp.printStackTrace();
         }
     }

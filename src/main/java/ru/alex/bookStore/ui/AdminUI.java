@@ -154,6 +154,11 @@ public class AdminUI extends BaseUI {
             createAndShowAllPanel.addComponent(panel);
         });
 
+        AbstractOrderedLayout panelWithButtons = getButtonsOnLeftSide();
+
+        components.addComponent(panelWithButtons);
+        components.setComponentAlignment(panelWithButtons, Alignment.MIDDLE_CENTER);
+
         window.setContent(components);
         window.setSizeFull();
         window.setResizable(false);
@@ -167,11 +172,21 @@ public class AdminUI extends BaseUI {
         getPage().setLocation("/main?logout");
     }
 
-    private class UserMenuItemCommand implements MenuBar.Command {
+    private AbstractOrderedLayout getButtonsOnLeftSide() {
+        HorizontalLayout panelForButtons = new HorizontalLayout();
+        panelForButtons.setWidth(100f, Unit.PERCENTAGE);
 
-        @Override
-        public void menuSelected(MenuBar.MenuItem selectedItem) {
+        Button newUserButton = new Button("Create user");
+        Button deleteUserButton = new Button("Delete user");
 
-        }
+        panelForButtons.addComponent(newUserButton);
+        panelForButtons.addComponent(deleteUserButton);
+        return panelForButtons;
+    }
+
+    private void deleteUserButtonClick(Button.ClickEvent e) {
+        Component leftComponent = createAndShowAllPanel.getFirstComponent();
+
+
     }
 }

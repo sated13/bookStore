@@ -29,4 +29,14 @@ public class UserRole {
     public String toString() {
         return role;
     }
+
+    @Override
+    public int hashCode() {
+        return role.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return role.equals(((UserRole)obj).getRole());
+    }
 }

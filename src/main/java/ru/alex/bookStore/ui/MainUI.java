@@ -7,7 +7,10 @@ import com.vaadin.ui.themes.ValoTheme;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import ru.alex.bookStore.entities.BookCategory;
+import ru.alex.bookStore.entities.User;
+import ru.alex.bookStore.entities.UserRole;
 import ru.alex.bookStore.repository.BookCategoryRepository;
+import ru.alex.bookStore.repository.UserRoleRepository;
 
 import java.util.List;
 
@@ -16,6 +19,8 @@ public class MainUI extends BaseUI {
 
     @Autowired
     BookCategoryRepository bookCategoryRepository;
+    @Autowired
+    UserRoleRepository userRoleRepository;
 
     Button loginButtonBase = new Button("Login", this::loginButtonBaseClick);
     Button registerButtonBase = new Button("Register", this::registerButtonBaseClick);
@@ -26,7 +31,8 @@ public class MainUI extends BaseUI {
 
     @Override
     protected void init(VaadinRequest vaadinRequest) {
-        Boolean isAuthenticated = !anonymousUser.equals(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        String authenticatedPrincipal = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Boolean isAuthenticated = !anonymousUser.equals(authenticatedPrincipal);
         float horizontalPanelSize = 0;
 
         Window window = new Window();
@@ -41,8 +47,10 @@ public class MainUI extends BaseUI {
         adminPanelButton.setStyleName(ValoTheme.BUTTON_LINK);
 
         if (isAuthenticated) {
-            horizontalPanelForButtons.addComponent(adminPanelButton);
-            horizontalPanelSize += adminPanelButton.getWidth();
+            if (doesUserHaveAdminRole(authenticatedPrincipal)) {
+                horizontalPanelForButtons.addComponent(adminPanelButton);
+                horizontalPanelSize += adminPanelButton.getWidth();
+            }
 
             horizontalPanelForButtons.addComponent(logoutButtonBase);
             horizontalPanelSize += logoutButtonBase.getWidth();
@@ -116,5 +124,16 @@ public class MainUI extends BaseUI {
 
     private void adminPanelButtonClick(Button.ClickEvent e) {
         getPage().setLocation("/adminPanel");
+    }
+
+    private boolean doesUserHaveAdminRole(String userName) {
+        boolean result;
+
+        User user = userService.findByUsername(userName);
+        UserRole userRole = userRoleRepository.findByRole("admin");
+
+        result = (user.getRoles().contains(userRole)) ? true : false;
+
+        return result;
     }
 }
