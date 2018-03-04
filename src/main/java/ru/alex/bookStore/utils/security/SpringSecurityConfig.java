@@ -1,4 +1,4 @@
-package ru.alex.bookStore.utils;
+package ru.alex.bookStore.utils.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -30,7 +30,8 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                         "/register", "/main")
                 .permitAll()
                 //make for users with 'admin' role
-                .antMatchers("/adminPanel", "/adminPanel/**").permitAll()
+                //.antMatchers("/adminPanel", "/adminPanel/**").permitAll()
+                .antMatchers("/adminPanel", "/adminPanel/**").hasAuthority("admin")
                 .antMatchers("/**").fullyAuthenticated()
                 .and()
                 .logout().permitAll();

@@ -1,4 +1,4 @@
-package ru.alex.bookStore.utils;
+package ru.alex.bookStore.utils.security;
 
 public interface SecurityService {
 

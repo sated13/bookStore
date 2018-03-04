@@ -116,9 +116,9 @@ public class Book implements Serializable {
     public String toString() {
         StringBuilder result = new StringBuilder();
         result
-                .append(StringUtils.collectionToCommaDelimitedString(authors))
+                .append(bookTitle)
                 .append(" ")
-                .append(bookTitle);
+                .append(StringUtils.collectionToCommaDelimitedString(authors));
         return result.toString();
     }
 }

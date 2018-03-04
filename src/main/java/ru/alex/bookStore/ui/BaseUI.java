@@ -8,10 +8,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import ru.alex.bookStore.entities.User;
-import ru.alex.bookStore.utils.SecurityService;
-import ru.alex.bookStore.utils.UserService;
+import ru.alex.bookStore.entities.UserRole;
+import ru.alex.bookStore.utils.roles.RoleService;
+import ru.alex.bookStore.utils.security.SecurityService;
+import ru.alex.bookStore.utils.users.UserService;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class BaseUI extends UI {
 
@@ -20,9 +25,9 @@ public class BaseUI extends UI {
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
-    @Autowired
     UserService userService;
+    @Autowired
+    RoleService roleService;
     @Autowired
     private SecurityService securityService;
 
@@ -36,6 +41,8 @@ public class BaseUI extends UI {
     protected VaadinRequest localVaadinRequest;
     private Boolean authorizationUIflag = false;
     private Boolean registrationUIflag = false;
+
+    private final String customerRole = "customer";
 
     @Override
     protected void init(VaadinRequest vaadinRequest) {
@@ -80,6 +87,8 @@ public class BaseUI extends UI {
         window.setContent(createAuthorizationForm());
         window.center();
         window.setResizable(false);
+        window.setModal(true);
+
         if (authorizationUIflag) window.setClosable(false);
 
         addWindow(window);
@@ -107,6 +116,8 @@ public class BaseUI extends UI {
         window.setContent(createRegistrationForm());
         window.center();
         window.setResizable(false);
+        window.setModal(true);
+
         if (registrationUIflag) window.setClosable(false);
 
         addWindow(window);
@@ -117,7 +128,7 @@ public class BaseUI extends UI {
             UserDetails userDetails = userDetailsService.loadUserByUsername(usernameField.getValue());
             UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken;
 
-            if (passwordEncoder.matches(passwordField.getValue(), userDetails.getPassword())) {
+            if (userService.passwordIsCorrect(passwordField.getValue(), userDetails.getPassword())) {
                 usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(usernameField.getValue(), passwordField.getValue(), userDetails.getAuthorities());
                 authenticationManager.authenticate(usernamePasswordAuthenticationToken);
 
@@ -132,6 +143,7 @@ public class BaseUI extends UI {
             }
         } catch (Exception exp) {
             Notification.show("Wrong credentials!", Notification.Type.ERROR_MESSAGE);
+            //ToDo: add logging
             exp.printStackTrace();
         }
     }
@@ -139,18 +151,17 @@ public class BaseUI extends UI {
     protected void registerButtonClick(Button.ClickEvent e) {
 
         if (null != passwordField.getValue() && passwordField.getValue().equals(confirmPasswordField.getValue())) {
+            UserRole customerUserRole = roleService.findByRole(customerRole);
+            Set<UserRole> roles = new HashSet<>();
+            roles.add(customerUserRole);
 
-            User user = new User();
-            user.setUsername(usernameField.getValue());
-            user.setPassword(passwordField.getValue());
-
-            userService.save(user);
+            userService.save(usernameField.getValue(), passwordField.getValue(), roles);
             securityService.autoLogin(usernameField.getValue(), passwordField.getValue());
 
             //redirect to main page
             getPage().setLocation("/main");
         } else {
-            //error message
+            //ToDo: add logging
         }
     }
 

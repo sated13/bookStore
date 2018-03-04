@@ -1,10 +1,12 @@
 package ru.alex.bookStore.entities;
 
+import org.springframework.security.core.GrantedAuthority;
+
 import javax.persistence.*;
 
 @Entity
 @Table(name = "user_roles")
-public class UserRole {
+public class UserRole implements GrantedAuthority{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -12,31 +14,36 @@ public class UserRole {
     private Long userRoleId;
 
     @Column(nullable = false, length = 45)
-    String role;
+    String authority;
 
     public UserRole() {
     }
 
-    public String getRole() {
-        return role;
+    public String getAuthority() {
+        return authority;
     }
 
-    public void setRole(String role) {
-        this.role = role;
+    public void setAuthority(String role) {
+        this.authority = role;
     }
 
-    @Override
-    public String toString() {
-        return role;
-    }
-
-    @Override
-    public int hashCode() {
-        return role.hashCode();
-    }
-
-    @Override
     public boolean equals(Object obj) {
-        return role.equals(((UserRole)obj).getRole());
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj instanceof UserRole) {
+            return authority.equals(((UserRole) obj).authority);
+        }
+
+        return false;
+    }
+
+    public int hashCode() {
+        return this.authority.hashCode();
+    }
+
+    public String toString() {
+        return this.authority;
     }
 }

@@ -1,4 +1,4 @@
-package ru.alex.bookStore.utils;
+package ru.alex.bookStore.utils.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;

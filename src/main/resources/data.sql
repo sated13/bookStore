@@ -98,20 +98,20 @@ commit;
 
 --users
 
-insert into users(user_id, username, password) values(1, 'admin', '$2a$10$1HUIfBS2OWXwqNLjBmljEueZzAtrgfoUDn7TSdFf8rryjlhYvKcfS');//password: adminishe
+insert into users(user_id, username, password, enabled) values(1, 'admin', '$2a$10$1HUIfBS2OWXwqNLjBmljEueZzAtrgfoUDn7TSdFf8rryjlhYvKcfS', 1);//password: adminishe
 commit;
-INSERT INTO users(user_id, username, password) values(2, 'test', '$2a$10$JUR6XWi.KIixW0lFSevj7OWosw0DWOY9BtqZPtMf5DouJN7R8fHVS'); //test
+INSERT INTO users(user_id, username, password, enabled) values(2, 'test', '$2a$10$JUR6XWi.KIixW0lFSevj7OWosw0DWOY9BtqZPtMf5DouJN7R8fHVS', 1); //test
 commit;
-insert into users(user_id, username, password) values(3, 'customer_1', '$2a$10$.YpNXLtMLbRbw7hcbeVU3uq7tQp7gPZGtlwhQ1KNCIpK3F8lo9Rme');//password: password-1234
+insert into users(user_id, username, password, enabled) values(3, 'customer_1', '$2a$10$.YpNXLtMLbRbw7hcbeVU3uq7tQp7gPZGtlwhQ1KNCIpK3F8lo9Rme', 1);//password: password-1234
 commit;
-insert into users(user_id, username, password) values(4, 'customer_2', '$2a$10$V1DRG8Za2Hb97lEgD7dGyO89zMf24YnUSTYjl1lLlNEsMe21LK8Da');//password: Password-4321
+insert into users(user_id, username, password, enabled) values(4, 'customer_2', '$2a$10$V1DRG8Za2Hb97lEgD7dGyO89zMf24YnUSTYjl1lLlNEsMe21LK8Da', 1);//password: Password-4321
 commit;
 
 --user roles
 
-insert into user_roles (user_role_id, role) values(1, 'admin');
-insert into user_roles (user_role_id, role) values(2, 'not_destructive_actions_only');
-insert into user_roles (user_role_id, role) values(3, 'customer');
+insert into user_roles (user_role_id, authority) values(1, 'admin');
+insert into user_roles (user_role_id, authority) values(2, 'not_destructive_actions_only');
+insert into user_roles (user_role_id, authority) values(3, 'customer');
 commit;
 --users_user_roles
 
