@@ -1,6 +1,5 @@
 package ru.alex.bookStore.entities;
 
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
@@ -33,7 +32,8 @@ public class Book implements Serializable {
     private String publishingHouse = "";
     private BigDecimal price;
     private Integer numberOfCopies = 0;
-    private Byte[] pictureOfBookCover;
+    @OneToOne(fetch = FetchType.LAZY)
+    private Cover pictureOfBookCover;
 
     public Book() {
     }
@@ -71,11 +71,15 @@ public class Book implements Serializable {
     }
 
     public Byte[] getPictureOfBookCover() {
-        return pictureOfBookCover;
+        return pictureOfBookCover.getPictureOfBookCover();
     }
 
     public void setBookTitle(String bookTitle) {
         this.bookTitle = bookTitle;
+    }
+
+    public void setAuthors(Set<String> authors) {
+        this.authors = authors;
     }
 
     public void addAuthor(String author) {
@@ -109,7 +113,7 @@ public class Book implements Serializable {
     }
 
     public void setPictureOfBookCover(Byte[] pictureOfBookCover) {
-        this.pictureOfBookCover = pictureOfBookCover;
+        this.pictureOfBookCover.setPictureOfBookCover(pictureOfBookCover);
     }
 
     @Override
