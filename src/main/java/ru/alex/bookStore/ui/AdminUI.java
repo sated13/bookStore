@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import ru.alex.bookStore.entities.Book;
+import ru.alex.bookStore.entities.User;
+import ru.alex.bookStore.entities.UserRole;
 import ru.alex.bookStore.utils.book.BookService;
 import ru.alex.bookStore.utils.bookCategory.BookCategoryService;
 import ru.alex.bookStore.utils.roles.RoleService;
@@ -24,6 +26,7 @@ import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @SpringUI(path = "/adminPanel")
 public class AdminUI extends BaseUI {
@@ -38,9 +41,12 @@ public class AdminUI extends BaseUI {
     RoleService roleService;
 
     Button logoutButtonBase = new Button("Logout", this::logoutButtonClicked);
-    HorizontalSplitPanel createAndShowAllItemsPanel = new HorizontalSplitPanel();
     VerticalLayout globalPanel = new VerticalLayout();
+    HorizontalSplitPanel createAndShowAllItemsPanel = new HorizontalSplitPanel();
     VerticalLayout leftPanel = new VerticalLayout();
+    VerticalSplitPanel rightPanel = new VerticalSplitPanel();
+    Panel rightTopPanelOnRightPanel = new Panel();
+    FormLayout rightTopPanelOnRightPanelComponents = new FormLayout();
 
     @Override
     public void init(VaadinRequest vaadinRequest) {
@@ -83,6 +89,10 @@ public class AdminUI extends BaseUI {
 
         createAndShowAllItemsPanel.removeAllComponents();
         createAndShowAllItemsPanel.addComponent(leftPanel);
+        createAndShowAllItemsPanel.addComponent(rightPanel);
+        //rightPanel.addComponent(rightTopPanelOnRightPanel);
+        //rightTopPanelOnRightPanel.setContent(rightTopPanelOnRightPanelComponents);
+        rightPanel.addComponent(rightTopPanelOnRightPanelComponents);
 
         window.setContent(globalPanel);
         window.setSizeFull();
@@ -111,6 +121,9 @@ public class AdminUI extends BaseUI {
         listWithUsers.addSelectionListener(event -> {
             Set<String> selected = event.getNewSelection();
             Notification.show(selected.size() + " users selected.", Notification.Type.TRAY_NOTIFICATION);
+            if (selected.size() == 1) {
+                createRightPanelForUserMenu(selected.iterator().next());
+            }
         });
         listWithUsers.setItems(userService.getAllUsernames());
 
@@ -130,6 +143,26 @@ public class AdminUI extends BaseUI {
         leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
 
         addCreateAndShowAllItemsPanelOnGlobalPanel();
+    }
+
+    private void createRightPanelForUserMenu(String selectedUser) {
+        TextField usernameTextField = new TextField("Login");
+        usernameTextField.setWidth(100f, Unit.PERCENTAGE);
+        usernameTextField.setEnabled(false);
+
+        ListSelect<String> selectedUserRoles = new ListSelect<>();
+        selectedUserRoles.setWidth(100f, Unit.PERCENTAGE);
+        selectedUserRoles.setHeight(100f, Unit.PERCENTAGE);
+
+        Label rolesLabel = new Label("Roles");
+
+        User user = userService.findByUsername(selectedUser);
+
+        selectedUserRoles.setItems(user.getRoles().stream()
+                .map(UserRole::toString).collect(Collectors.toSet()));
+
+        rightTopPanelOnRightPanelComponents.removeAllComponents();
+        rightTopPanelOnRightPanelComponents.addComponents(usernameTextField, rolesLabel, selectedUserRoles);
     }
 
     private void createLeftPanelForUsersRolesMenu() {
