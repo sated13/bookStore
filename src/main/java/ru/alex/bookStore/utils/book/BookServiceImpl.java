@@ -1,16 +1,23 @@
 package ru.alex.bookStore.utils.book;
 
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.alex.bookStore.entities.Book;
+import ru.alex.bookStore.entities.BookCategory;
+import ru.alex.bookStore.entities.Cover;
 import ru.alex.bookStore.repository.BookRepository;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class BookServiceImpl implements BookService {
 
     @Autowired
@@ -28,11 +35,19 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public List<String> getAllStringBooks() {
-        List<Book> allBooks = getAllBooks();
-        List<String> allStringBooks = new ArrayList<>();
-        for(Book book: allBooks) {
-            allStringBooks.add(book.toString());
-        }
+        List<String> allStringBooks = getAllBooks().stream().map(Book::toString).collect(Collectors.toList());
         return allStringBooks;
+    }
+
+    @Override
+    public Set<BookCategory> getBookCategories(Book book) {
+        Hibernate.initialize(book.getCategories());
+        return book.getCategories();
+    }
+
+    @Override
+    public Cover getBookCover(Book book) {
+        Hibernate.initialize(book.getPictureOfBookCover());
+        return book.getPictureOfBookCover();
     }
 }

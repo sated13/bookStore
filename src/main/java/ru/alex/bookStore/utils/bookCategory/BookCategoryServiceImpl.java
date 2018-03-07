@@ -1,8 +1,10 @@
 package ru.alex.bookStore.utils.bookCategory;
 
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.alex.bookStore.entities.Book;
 import ru.alex.bookStore.entities.BookCategory;
 import ru.alex.bookStore.repository.BookCategoryRepository;
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @Service
+@Transactional
 public class BookCategoryServiceImpl implements BookCategoryService{
 
     @Autowired
@@ -92,6 +95,8 @@ public class BookCategoryServiceImpl implements BookCategoryService{
 
     @Override
     public Set<Book> getBooksByCategory(String category) {
-        return Collections.unmodifiableSet(bookCategoryRepository.findBookCategoryByCategory(category).getBooks());
+        BookCategory bookCategory = bookCategoryRepository.findBookCategoryByCategory(category);
+        Hibernate.initialize(bookCategory.getBooks());
+        return Collections.unmodifiableSet(bookCategory.getBooks());
     }
 }

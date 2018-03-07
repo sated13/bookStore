@@ -242,8 +242,11 @@ public class AdminUI extends BaseUI {
         listWithBooks.setHeight(100f, Unit.PERCENTAGE);
 
         listWithBooks.addSelectionListener(event -> {
-            Set<Book> selected = event.getNewSelection();
-            Notification.show(selected.size() + " books selected.", Notification.Type.TRAY_NOTIFICATION);
+            Set<Book> selected = event.getAllSelectedItems();
+            //Notification.show(selected.size() + " books selected.", Notification.Type.TRAY_NOTIFICATION);
+            if (selected.size() == 1) {
+                createRightPanelForBooksMenu(selected.iterator().next());
+            }
         });
         listWithBooks.setItems(bookService.getAllBooks());
 
@@ -264,6 +267,66 @@ public class AdminUI extends BaseUI {
         leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
 
         addCreateAndShowAllItemsPanelOnGlobalPanel();
+    }
+
+    private void createRightPanelForBooksMenu(Book selectedBook) {
+        Label bookLabel = new Label("Book");
+
+        TextField bookTitleTextField = new TextField("Title");
+        bookTitleTextField.setWidth(100f, Unit.PERCENTAGE);
+        bookTitleTextField.setValue(selectedBook.getBookTitle());
+        bookTitleTextField.setEnabled(false);
+
+        TextField authorsTextField = new TextField("Authors");
+        authorsTextField.setWidth(100f, Unit.PERCENTAGE);
+        authorsTextField.setValue(StringUtils.collectionToDelimitedString(selectedBook.getAuthors(), ", "));
+        authorsTextField.setEnabled(false);
+
+        TextField numberOfPagesTextField = new TextField("Number of pages");
+        numberOfPagesTextField.setWidth(100f, Unit.PERCENTAGE);
+        numberOfPagesTextField.setValue(selectedBook.getNumberOfPages().toString());
+        numberOfPagesTextField.setEnabled(false);
+
+        TextField yearTextField = new TextField("Year");
+        yearTextField.setWidth(100f, Unit.PERCENTAGE);
+        yearTextField.setValue(selectedBook.getYear().toString());
+        yearTextField.setEnabled(false);
+
+        TextField publishingHouseTextField = new TextField("Publishing house");
+        publishingHouseTextField.setWidth(100f, Unit.PERCENTAGE);
+        publishingHouseTextField.setValue(selectedBook.getPublishingHouse());
+        publishingHouseTextField.setEnabled(false);
+
+        TextField priceTextField = new TextField("Price");
+        priceTextField.setWidth(100f, Unit.PERCENTAGE);
+        priceTextField.setValue(selectedBook.getPrice().toString());
+        priceTextField.setEnabled(false);
+
+        TextField numberOfCopiesTextField = new TextField("Number of copies");
+        numberOfCopiesTextField.setWidth(100f, Unit.PERCENTAGE);
+        numberOfCopiesTextField.setValue(selectedBook.getNumberOfCopies().toString());
+        numberOfCopiesTextField.setEnabled(false);
+
+        Image bookCover = new Image();
+        bookCover.setSource(new StreamResource(selectedBook.getPictureOfBookCover(), null));
+        pictureOfBookCoverImageUploader.setWidth(100f, Unit.PERCENTAGE);
+
+        Button createBookButton = new Button("Create");
+
+        leftPanel.addComponents(bookTitleTextField, authorsTextField, numberOfPagesTextField,
+                yearTextField, publishingHouseTextField, priceTextField, numberOfCopiesTextField,
+                pictureOfBookCoverImageUploader, createBookButton);
+        leftPanel.setComponentAlignment(createBookButton, Alignment.TOP_LEFT);
+
+        VerticalLayout rightPanel = new VerticalLayout();
+        rightPanel.setHeight(100f, Unit.PERCENTAGE);
+        rightPanel.setWidth(100f, Unit.PERCENTAGE);
+
+        ListSelect<String> listWithCategories = new ListSelect<>();
+        listWithCategories.setWidth(100f, Unit.PERCENTAGE);
+        listWithCategories.setHeight(100f, Unit.PERCENTAGE);
+
+        listWithCategories.setItems(bookCategoryService.getAllStringCategories());
     }
 
     private void createLeftPanelForCategoriesOfBooksMenu() {
@@ -412,9 +475,9 @@ public class AdminUI extends BaseUI {
         Window window = new Window("Create book");
 
         FormLayout createBookLayout = new FormLayout();
-        HorizontalSplitPanel createUserSplitLayout = new HorizontalSplitPanel();
-        createUserSplitLayout.setHeight(100f, Unit.PERCENTAGE);
-        createUserSplitLayout.setWidth(100f, Unit.PERCENTAGE);
+        HorizontalSplitPanel createBookSplitLayout = new HorizontalSplitPanel();
+        createBookSplitLayout.setHeight(100f, Unit.PERCENTAGE);
+        createBookSplitLayout.setWidth(100f, Unit.PERCENTAGE);
 
         VerticalLayout leftPanel = new VerticalLayout();
         leftPanel.setHeight(100f, Unit.PERCENTAGE);
@@ -547,7 +610,15 @@ public class AdminUI extends BaseUI {
         ImageUploader pictureOfBookCoverImageUploader = new ImageUploader();
         pictureOfBookCoverImageUploader.setWidth(100f, Unit.PERCENTAGE);
 
-        Button createBookButton = new Button("Create");
+        Button createBookButton = new Button("Create", event -> {
+            boolean resultOfOperation;
+
+            resultOfOperation = bookService.save(categoryField.getValue());
+
+            Notification.show("Category \"" + categoryField.getValue() +
+                            ((resultOfOperation) ? "\" created." : " didn't created."),
+                    Notification.Type.TRAY_NOTIFICATION);
+        });
 
         leftPanel.addComponents(bookTitleTextField, authorsTextField, numberOfPagesTextField,
                 yearDateField, publishingHouseTextField, priceTextField, numberOfCopiesTextField,
@@ -567,9 +638,9 @@ public class AdminUI extends BaseUI {
         rightPanel.addComponents(new Label("Choose book categories"), listWithCategories);
         rightPanel.setHeight(100f, Unit.PERCENTAGE);
 
-        createUserSplitLayout.addComponents(leftPanel, rightPanel);
+        createBookSplitLayout.addComponents(leftPanel, rightPanel);
 
-        createBookLayout.addComponent(createUserSplitLayout);
+        createBookLayout.addComponent(createBookSplitLayout);
 
         window.setContent(createBookLayout);
         window.setSizeFull();
@@ -586,8 +657,7 @@ public class AdminUI extends BaseUI {
         TextField categoryField = new TextField("New category");
         categoryField.setWidth(100f, Unit.PERCENTAGE);
 
-        Button createNewUserRoleButton = new Button("Create");
-        createNewUserRoleButton.addClickListener((event) -> {
+        Button createNewUserRoleButton = new Button("Create", (event) -> {
 
             boolean resultOfOperation;
 

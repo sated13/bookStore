@@ -1,5 +1,7 @@
 package ru.alex.bookStore.entities;
 
+import org.hibernate.Hibernate;
+import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
@@ -8,7 +10,6 @@ import java.util.Set;
 
 @Entity
 @Table(name = "book_categories")
-@Transactional
 public class BookCategory implements Serializable {
 
     @Id

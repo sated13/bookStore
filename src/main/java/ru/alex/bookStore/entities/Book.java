@@ -1,5 +1,6 @@
 package ru.alex.bookStore.entities;
 
+import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -35,7 +36,7 @@ public class Book implements Serializable {
     private Integer numberOfPages = 0;
     private Short year = 0;
     private String publishingHouse = "";
-    private BigDecimal price;
+    private BigDecimal price = new BigDecimal(0);
     private Integer numberOfCopies = 0;
     @OneToOne(fetch = FetchType.LAZY)
     private Cover pictureOfBookCover;
@@ -52,6 +53,7 @@ public class Book implements Serializable {
     }
 
     public Set<BookCategory> getCategories() {
+        Hibernate.initialize(categories);
         return Collections.unmodifiableSet(categories);
     }
 
@@ -75,8 +77,8 @@ public class Book implements Serializable {
         return numberOfCopies;
     }
 
-    public Byte[] getPictureOfBookCover() {
-        return pictureOfBookCover.getPictureOfBookCover();
+    public Cover getPictureOfBookCover() {
+        return pictureOfBookCover;
     }
 
     public void setBookTitle(String bookTitle) {
@@ -121,8 +123,8 @@ public class Book implements Serializable {
         this.numberOfCopies = numberOfCopies;
     }
 
-    public void setPictureOfBookCover(Byte[] pictureOfBookCover) {
-        this.pictureOfBookCover.setPictureOfBookCover(pictureOfBookCover);
+    public void setPictureOfBookCover(Cover pictureOfBookCover) {
+        this.pictureOfBookCover = pictureOfBookCover;
     }
 
     @Override
