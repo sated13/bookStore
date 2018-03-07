@@ -3,6 +3,7 @@ package ru.alex.bookStore.utils.roles;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import ru.alex.bookStore.entities.User;
 import ru.alex.bookStore.entities.UserRole;
 import ru.alex.bookStore.repository.RoleRepository;
 
@@ -95,5 +96,10 @@ public class RoleServiceImpl implements RoleService{
         }
 
         return allStringUserRoles;
+    }
+
+    @Override
+    public Set<User> getUsersByRole(String role) {
+        return Collections.unmodifiableSet(roleRepository.findByAuthority(role).getUsers());
     }
 }

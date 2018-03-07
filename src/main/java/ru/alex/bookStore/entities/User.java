@@ -7,11 +7,11 @@ import java.util.Set;
 
 @Entity
 @Table(name = "users")
-public class User {// extends org.springframework.security.core.userdetails.User{
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(unique = true, nullable = false)
+    @Column(name = "user_Id", unique = true, nullable = false)
     private Long userId;
 
     @Column(nullable = false, length = 100)
@@ -21,22 +21,19 @@ public class User {// extends org.springframework.security.core.userdetails.User
     private String password;
 
     @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_Id", referencedColumnName = "user_Id"),
+            inverseJoinColumns = @JoinColumn(name = "user_role_id", referencedColumnName= "user_role_id"))
     private Set<UserRole> roles;
 
     @Column(nullable = false)
     private boolean enabled;
 
     public User() {
-        //this("", "", new HashSet<UserRole>());
     }
 
-    /*public User(String username, String password, Collection<? extends GrantedAuthority> authorities) {
-        super(username, password, authorities);
-    }
 
-    @Override*/
     public String getUsername() {
-        //return super.getUsername();
         return username;
     }
 
@@ -44,9 +41,7 @@ public class User {// extends org.springframework.security.core.userdetails.User
         this.username = username;
     }
 
-    //@Override
     public String getPassword() {
-        //return super.getPassword();
         return password;
     }
 
@@ -55,7 +50,6 @@ public class User {// extends org.springframework.security.core.userdetails.User
     }
 
     public Set<UserRole> getRoles() {
-        //return super.getAuthorities();
         return roles;
     }
 
@@ -67,7 +61,6 @@ public class User {// extends org.springframework.security.core.userdetails.User
         this.roles.add(userRole);
     }
 
-    //@Override
     public boolean isEnabled() {
         return enabled;
     }

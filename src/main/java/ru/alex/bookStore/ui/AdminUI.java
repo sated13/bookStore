@@ -19,7 +19,9 @@ import ru.alex.bookStore.utils.roles.RoleService;
 import ru.alex.bookStore.utils.ui.YesNoDialog;
 import ru.alex.bookStore.utils.users.UserService;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -81,24 +83,32 @@ public class AdminUI extends BaseUI {
         MenuBar.MenuItem usersMenuItem = menuBar.addItem("Users",
                 (selectedMenuItem) -> createLeftPanelForUserMenu());
         MenuBar.MenuItem rolesOfUsersMenuItem = menuBar.addItem("Roles of users",
-                (selectedMenuItem) -> createLeftPanelForUsersRolesMenu());
+                (selectedMenuItem) -> createLeftPanelForRolesOfUsersMenu());
         MenuBar.MenuItem booksMenuItem = menuBar.addItem("Books",
                 (selectedMenuItem) -> createLeftPanelForBooksMenu());
         MenuBar.MenuItem categoriesOfBooksMenuItem = menuBar.addItem("Categories of books",
-                (selectedMenuItem) -> createLeftPanelForBooksCategoriesMenu());
+                (selectedMenuItem) -> createLeftPanelForCategoriesOfBooksMenu());
+
+        rightTopPanelOnRightPanelComponents.setHeight("600px");
+        rightTopPanelOnRightPanelComponents.setStyleName(ValoTheme.LAYOUT_WELL);
 
         createAndShowAllItemsPanel.removeAllComponents();
         createAndShowAllItemsPanel.addComponent(leftPanel);
         createAndShowAllItemsPanel.addComponent(rightPanel);
-        //rightPanel.addComponent(rightTopPanelOnRightPanel);
-        //rightTopPanelOnRightPanel.setContent(rightTopPanelOnRightPanelComponents);
-        rightPanel.addComponent(rightTopPanelOnRightPanelComponents);
 
         window.setContent(globalPanel);
         window.setSizeFull();
         window.setResizable(false);
         window.setClosable(false);
         addWindow(window);
+    }
+
+    private void cleanLeftAndRightPanel() {
+        leftPanel.removeAllComponents();
+        rightPanel.removeAllComponents();
+
+        rightTopPanelOnRightPanelComponents.removeAllComponents();
+        rightPanel.addComponent(rightTopPanelOnRightPanelComponents);
     }
 
     private void logoutButtonClicked(Button.ClickEvent e) {
@@ -114,18 +124,21 @@ public class AdminUI extends BaseUI {
     }
 
     private void createLeftPanelForUserMenu() {
+        Label usersLabel = new Label("Users");
+
         ListSelect<String> listWithUsers = new ListSelect<>();
         listWithUsers.setWidth(100f, Unit.PERCENTAGE);
         listWithUsers.setHeight(100f, Unit.PERCENTAGE);
 
+        listWithUsers.setItems(userService.getAllUsernames());
+
         listWithUsers.addSelectionListener(event -> {
-            Set<String> selected = event.getNewSelection();
-            Notification.show(selected.size() + " users selected.", Notification.Type.TRAY_NOTIFICATION);
+            Set<String> selected = event.getAllSelectedItems();
+            //Notification.show(selected.size() + " users selected.", Notification.Type.TRAY_NOTIFICATION);
             if (selected.size() == 1) {
-                createRightPanelForUserMenu(selected.iterator().next());
+                createRightTopPanelForUserMenu(selected.iterator().next());
             }
         });
-        listWithUsers.setItems(userService.getAllUsernames());
 
         VerticalLayout panelWithButtons = new VerticalLayout();
         panelWithButtons.setWidth(100f, Unit.PERCENTAGE);
@@ -138,41 +151,53 @@ public class AdminUI extends BaseUI {
         panelWithButtons.setComponentAlignment(newUserButton, Alignment.TOP_LEFT);
         panelWithButtons.setComponentAlignment(deleteUserButton, Alignment.TOP_LEFT);
 
-        leftPanel.removeAllComponents();
-        leftPanel.addComponents(listWithUsers, panelWithButtons);
+        cleanLeftAndRightPanel();
+        leftPanel.addComponents(usersLabel, listWithUsers, panelWithButtons);
+        leftPanel.setComponentAlignment(usersLabel, Alignment.TOP_LEFT);
         leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
 
         addCreateAndShowAllItemsPanelOnGlobalPanel();
     }
 
-    private void createRightPanelForUserMenu(String selectedUser) {
-        TextField usernameTextField = new TextField("Login");
+    private void createRightTopPanelForUserMenu(String selectedUser) {
+        Label loginLabel = new Label("Login");
+
+        TextField usernameTextField = new TextField();
         usernameTextField.setWidth(100f, Unit.PERCENTAGE);
         usernameTextField.setEnabled(false);
 
-        ListSelect<String> selectedUserRoles = new ListSelect<>();
-        selectedUserRoles.setWidth(100f, Unit.PERCENTAGE);
-        selectedUserRoles.setHeight(100f, Unit.PERCENTAGE);
+        ListSelect<String> rolesForSelectedUser = new ListSelect<>();
+        rolesForSelectedUser.setWidth(100f, Unit.PERCENTAGE);
 
         Label rolesLabel = new Label("Roles");
 
         User user = userService.findByUsername(selectedUser);
 
-        selectedUserRoles.setItems(user.getRoles().stream()
+        rolesForSelectedUser.setItems(user.getRoles().stream()
                 .map(UserRole::toString).collect(Collectors.toSet()));
+        usernameTextField.setValue(user.getUsername());
 
         rightTopPanelOnRightPanelComponents.removeAllComponents();
-        rightTopPanelOnRightPanelComponents.addComponents(usernameTextField, rolesLabel, selectedUserRoles);
+        rightTopPanelOnRightPanelComponents.addComponents(loginLabel, usernameTextField, rolesLabel, rolesForSelectedUser);
+        rightTopPanelOnRightPanelComponents.setComponentAlignment(loginLabel, Alignment.TOP_CENTER);
+        rightTopPanelOnRightPanelComponents.setComponentAlignment(usernameTextField, Alignment.TOP_CENTER);
+        rightTopPanelOnRightPanelComponents.setComponentAlignment(rolesLabel, Alignment.TOP_CENTER);
+        rightTopPanelOnRightPanelComponents.setComponentAlignment(rolesForSelectedUser, Alignment.TOP_CENTER);
     }
 
-    private void createLeftPanelForUsersRolesMenu() {
+    private void createLeftPanelForRolesOfUsersMenu() {
+        Label rolesLabel = new Label("Roles");
+
         ListSelect<String> listWithRoles = new ListSelect<>();
         listWithRoles.setWidth(100f, Unit.PERCENTAGE);
         listWithRoles.setHeight(100f, Unit.PERCENTAGE);
 
         listWithRoles.addSelectionListener(event -> {
-            Set<String> selected = event.getNewSelection();
-            Notification.show(selected.size() + " roles of users selected.", Notification.Type.TRAY_NOTIFICATION);
+            Set<String> selected = event.getAllSelectedItems();
+            //Notification.show(selected.size() + " roles of users selected.", Notification.Type.TRAY_NOTIFICATION);
+            if (selected.size() == 1) {
+                createRightTopPanelForRolesOfUsersMenu(selected.iterator().next());
+            }
         });
         listWithRoles.setItems(roleService.getAllStringRoles());
 
@@ -187,14 +212,31 @@ public class AdminUI extends BaseUI {
         panelWithButtons.setComponentAlignment(newUserRoleButton, Alignment.TOP_LEFT);
         panelWithButtons.setComponentAlignment(deleteUserRoleButton, Alignment.TOP_LEFT);
 
-        leftPanel.removeAllComponents();
-        leftPanel.addComponents(listWithRoles, panelWithButtons);
+        cleanLeftAndRightPanel();
+        leftPanel.addComponents(rolesLabel, listWithRoles, panelWithButtons);
+        leftPanel.setComponentAlignment(rolesLabel, Alignment.TOP_LEFT);
         leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
 
         addCreateAndShowAllItemsPanelOnGlobalPanel();
     }
 
+    private void createRightTopPanelForRolesOfUsersMenu(String selectedRole) {
+        ListSelect<String> usersForSelectedRole = new ListSelect<>();
+        usersForSelectedRole.setWidth(100f, Unit.PERCENTAGE);
+
+        Label usersLabel = new Label("Users");
+        Set<User> users = roleService.getUsersByRole(selectedRole);
+        usersForSelectedRole.setItems(users.stream().map(User::getUsername).collect(Collectors.toList()));
+
+        rightTopPanelOnRightPanelComponents.removeAllComponents();
+        rightTopPanelOnRightPanelComponents.addComponents(usersLabel, usersForSelectedRole);
+        rightTopPanelOnRightPanelComponents.setComponentAlignment(usersLabel, Alignment.TOP_CENTER);
+        rightTopPanelOnRightPanelComponents.setComponentAlignment(usersForSelectedRole, Alignment.TOP_CENTER);
+    }
+
     private void createLeftPanelForBooksMenu() {
+        Label booksLabel = new Label("Books");
+
         ListSelect<Book> listWithBooks = new ListSelect<>();
         listWithBooks.setWidth(100f, Unit.PERCENTAGE);
         listWithBooks.setHeight(100f, Unit.PERCENTAGE);
@@ -216,21 +258,27 @@ public class AdminUI extends BaseUI {
         panelWithButtons.setComponentAlignment(newBookButton, Alignment.TOP_LEFT);
         panelWithButtons.setComponentAlignment(deleteBookButton, Alignment.TOP_LEFT);
 
-        leftPanel.removeAllComponents();
-        leftPanel.addComponents(listWithBooks, panelWithButtons);
+        cleanLeftAndRightPanel();
+        leftPanel.addComponents(booksLabel, listWithBooks, panelWithButtons);
+        leftPanel.setComponentAlignment(booksLabel, Alignment.TOP_LEFT);
         leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
 
         addCreateAndShowAllItemsPanelOnGlobalPanel();
     }
 
-    private void createLeftPanelForBooksCategoriesMenu() {
+    private void createLeftPanelForCategoriesOfBooksMenu() {
+        Label categoriesLabel = new Label("Categories");
+
         ListSelect<String> listWithCategories = new ListSelect<>();
         listWithCategories.setWidth(100f, Unit.PERCENTAGE);
         listWithCategories.setHeight(100f, Unit.PERCENTAGE);
 
         listWithCategories.addSelectionListener(event -> {
-            Set<String> selected = event.getNewSelection();
-            Notification.show(selected.size() + " categories of books selected.", Notification.Type.TRAY_NOTIFICATION);
+            Set<String> selected = event.getAllSelectedItems();
+            //Notification.show(selected.size() + " categories of books selected.", Notification.Type.TRAY_NOTIFICATION);
+            if (selected.size() == 1) {
+                createRightTopPanelForCategoriesOfBookMenu(selected.iterator().next());
+            }
         });
         listWithCategories.setItems(bookCategoryService.getAllStringCategories());
 
@@ -245,11 +293,26 @@ public class AdminUI extends BaseUI {
         panelWithButtons.setComponentAlignment(newBookCategoryButton, Alignment.TOP_LEFT);
         panelWithButtons.setComponentAlignment(deleteBookCategoryButton, Alignment.TOP_LEFT);
 
-        leftPanel.removeAllComponents();
-        leftPanel.addComponents(listWithCategories, panelWithButtons);
+        cleanLeftAndRightPanel();
+        leftPanel.addComponents(categoriesLabel, listWithCategories, panelWithButtons);
+        leftPanel.setComponentAlignment(categoriesLabel, Alignment.TOP_LEFT);
         leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
 
         addCreateAndShowAllItemsPanelOnGlobalPanel();
+    }
+
+    private void createRightTopPanelForCategoriesOfBookMenu(String selectedCategory) {
+        ListSelect<String> booksForSelectedCategiry = new ListSelect<>();
+        booksForSelectedCategiry.setWidth(100f, Unit.PERCENTAGE);
+
+        Label usersLabel = new Label("Books");
+        Set<Book> books = bookCategoryService.getBooksByCategory(selectedCategory);
+        booksForSelectedCategiry.setItems(books.stream().map(Book::toString).collect(Collectors.toList()));
+
+        rightTopPanelOnRightPanelComponents.removeAllComponents();
+        rightTopPanelOnRightPanelComponents.addComponents(usersLabel, booksForSelectedCategiry);
+        rightTopPanelOnRightPanelComponents.setComponentAlignment(usersLabel, Alignment.TOP_CENTER);
+        rightTopPanelOnRightPanelComponents.setComponentAlignment(booksForSelectedCategiry, Alignment.TOP_CENTER);
     }
 
     private void createUserButtonClick(Button.ClickEvent e) {
@@ -341,7 +404,7 @@ public class AdminUI extends BaseUI {
         window.setContent(createRoleLayout);
         window.center();
         window.setModal(true);
-        window.addCloseListener(e1 -> createLeftPanelForUsersRolesMenu());
+        window.addCloseListener(e1 -> createLeftPanelForRolesOfUsersMenu());
         addWindow(window);
     }
 
@@ -540,7 +603,7 @@ public class AdminUI extends BaseUI {
         window.setContent(createCategoryLayout);
         window.center();
         window.setModal(true);
-        window.addCloseListener(e1 -> createLeftPanelForBooksCategoriesMenu());
+        window.addCloseListener(e1 -> createLeftPanelForCategoriesOfBooksMenu());
         addWindow(window);
     }
 
@@ -574,7 +637,7 @@ public class AdminUI extends BaseUI {
                 resultIsYes -> {
                     if (resultIsYes) {
                         int countOfDeletedUsers = roleService.delete(selectedItems);
-                        createLeftPanelForUsersRolesMenu();
+                        createLeftPanelForRolesOfUsersMenu();
                         Notification.show(countOfDeletedUsers + " roles deleted",
                                 Notification.Type.TRAY_NOTIFICATION);
                     }
@@ -594,7 +657,7 @@ public class AdminUI extends BaseUI {
                 resultIsYes -> {
                     if (resultIsYes) {
                         int countOfDeletedUsers = bookCategoryService.delete(selectedItems);
-                        createLeftPanelForBooksCategoriesMenu();
+                        createLeftPanelForCategoriesOfBooksMenu();
                         Notification.show(countOfDeletedUsers + " categories deleted.",
                                 Notification.Type.TRAY_NOTIFICATION);
                     }

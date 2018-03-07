@@ -1,5 +1,6 @@
 package ru.alex.bookStore.utils.bookCategory;
 
+import ru.alex.bookStore.entities.Book;
 import ru.alex.bookStore.entities.BookCategory;
 
 import java.util.List;
@@ -18,4 +19,6 @@ public interface BookCategoryService {
     List<BookCategory> getAllCategories();
 
     List<String> getAllStringCategories();
+
+    Set<Book> getBooksByCategory(String category);
 }

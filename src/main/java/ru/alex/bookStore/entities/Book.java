@@ -1,22 +1,24 @@
 package ru.alex.bookStore.entities;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Table(name = "books")
+@Transactional
 public class Book implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(unique = true, nullable = false)
+    @Column(name = "book_id", unique = true, nullable = false)
     private Long bookId;
 
     @Column(nullable = false)
@@ -25,8 +27,11 @@ public class Book implements Serializable {
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> authors;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    private List<BookCategory> categories = new ArrayList<>();
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "books_categories",
+            joinColumns = @JoinColumn(name = "book_id", referencedColumnName = "book_id"),
+            inverseJoinColumns = @JoinColumn(name = "book_category_id", referencedColumnName= "book_category_id"))
+    private Set<BookCategory> categories = new HashSet<>();
     private Integer numberOfPages = 0;
     private Short year = 0;
     private String publishingHouse = "";
@@ -46,8 +51,8 @@ public class Book implements Serializable {
         return Collections.unmodifiableSet(authors);
     }
 
-    public List<BookCategory> getCategories() {
-        return Collections.unmodifiableList(categories);
+    public Set<BookCategory> getCategories() {
+        return Collections.unmodifiableSet(categories);
     }
 
     public Integer getNumberOfPages() {
@@ -90,6 +95,10 @@ public class Book implements Serializable {
         BookCategory bookCategory = new BookCategory();
         bookCategory.setCategory(category);
         this.categories.add(bookCategory);
+    }
+
+    public void setCategories(Set<BookCategory> categories) {
+        this.categories = categories;
     }
 
     public void setNumberOfPages(Integer numberOfPages) {

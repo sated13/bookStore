@@ -1,5 +1,6 @@
 package ru.alex.bookStore.utils.roles;
 
+import ru.alex.bookStore.entities.User;
 import ru.alex.bookStore.entities.UserRole;
 
 import java.util.List;
@@ -20,4 +21,6 @@ public interface RoleService {
     List<UserRole> getAllRoles();
 
     List<String> getAllStringRoles();
+
+    Set<User> getUsersByRole(String role);
 }
