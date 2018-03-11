@@ -5,15 +5,16 @@ import ru.alex.bookStore.entities.BookCategory;
 import ru.alex.bookStore.entities.Cover;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface BookService {
 
-    //boolean save(Book book);
+    Book save(Map<String, Object> bookParameters);
 
-    //boolean delete(Book book);
+    boolean delete(Book book);
 
-    //int delete(Set<String> books);
+    int delete(Set<Book> books);
 
     List<Book> findBooksByBookTitle(String bookTitle);
 

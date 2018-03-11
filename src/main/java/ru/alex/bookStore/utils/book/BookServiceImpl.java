@@ -10,10 +10,8 @@ import ru.alex.bookStore.entities.BookCategory;
 import ru.alex.bookStore.entities.Cover;
 import ru.alex.bookStore.repository.BookRepository;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +20,84 @@ public class BookServiceImpl implements BookService {
 
     @Autowired
     BookRepository bookRepository;
+
+    @Override
+    public Book save(Map<String, Object> bookParameters) {
+        Book newBook = new Book();
+
+        for(String key: bookParameters.keySet()) {
+            switch (key) {
+                case "bookTitle": {
+                    newBook.setBookTitle((String)bookParameters.get(key));
+                    break;
+                }
+                case "authors": {
+                    newBook.setAuthors((Set<String>) bookParameters.get(key));
+                    break;
+                }
+                case "categories": {
+                    newBook.setCategories((Set<BookCategory>) bookParameters.get(key));
+                    break;
+                }
+                case "numberOfPages": {
+                    newBook.setNumberOfPages((Integer) bookParameters.get(key));
+                    break;
+                }
+                case "year": {
+                    newBook.setYear((Short) bookParameters.get(key));
+                    break;
+                }
+                case "publishingHouse": {
+                    newBook.setNumberOfPages((Integer) bookParameters.get(key));
+                    break;
+                }
+                case "price": {
+                    newBook.setPrice((BigDecimal) bookParameters.get(key));
+                    break;
+                }
+                case "numberOfCopies": {
+                    newBook.setNumberOfCopies((Integer) bookParameters.get(key));
+                    break;
+                }
+                case "pictureOfBookCover": {
+                    newBook.setPictureOfBookCover(new Cover((byte[]) bookParameters.get(key)));
+                    break;
+                }
+            }
+        }
+
+        try {
+            bookRepository.save(newBook);
+        }
+        catch (Exception e) {
+            //ToDo: add logging
+            return null;
+        }
+
+        return newBook;
+    }
+
+    @Override
+    public boolean delete(Book book) {
+        try {
+            bookRepository.delete(book);
+            return true;
+        } catch (Exception e) {
+            //ToDo: add logging
+            return false;
+        }
+    }
+
+    @Override
+    public int delete(Set<Book> books) {
+        int result = 0;
+
+        for (Book book: books) {
+            result += (delete(book)) ? 1 : 0;
+        }
+
+        return result;
+    }
 
     @Override
     public List<Book> findBooksByBookTitle(String bookTitle) {

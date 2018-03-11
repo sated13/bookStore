@@ -10,24 +10,23 @@ import com.vaadin.ui.themes.ValoTheme;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
-import ru.alex.bookStore.entities.Book;
-import ru.alex.bookStore.entities.User;
-import ru.alex.bookStore.entities.UserRole;
+import ru.alex.bookStore.entities.*;
 import ru.alex.bookStore.utils.book.BookService;
 import ru.alex.bookStore.utils.bookCategory.BookCategoryService;
 import ru.alex.bookStore.utils.roles.RoleService;
 import ru.alex.bookStore.utils.ui.YesNoDialog;
 import ru.alex.bookStore.utils.users.UserService;
 
+import javax.persistence.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @SpringUI(path = "/adminPanel")
@@ -254,7 +253,7 @@ public class AdminUI extends BaseUI {
         panelWithButtons.setWidth(100f, Unit.PERCENTAGE);
 
         Button newBookButton = new Button("Create book", this::createBookButtonClick);
-        Button deleteBookButton = new Button("Delete book");//, this::deleteBookButtonClick);
+        Button deleteBookButton = new Button("Delete book", this::deleteBookButtonClick);
 
         panelWithButtons.addComponents(newBookButton, deleteBookButton);
 
@@ -307,15 +306,19 @@ public class AdminUI extends BaseUI {
         numberOfCopiesTextField.setValue(selectedBook.getNumberOfCopies().toString());
         numberOfCopiesTextField.setEnabled(false);
 
-        Image bookCover = new Image();
-        bookCover.setSource(new StreamResource(selectedBook.getPictureOfBookCover(), null));
-        pictureOfBookCoverImageUploader.setWidth(100f, Unit.PERCENTAGE);
+        Image bookCover;
+
+        bookCover = new Image(null, new StreamResource(() -> {
+            ByteArrayInputStream byteArrayInputStream =
+                    new ByteArrayInputStream(selectedBook.getPictureOfBookCover().getPictureOfBookCover());
+            return byteArrayInputStream;}, null));
+        bookCover.setWidth(100f, Unit.PERCENTAGE);
 
         Button createBookButton = new Button("Create");
 
-        leftPanel.addComponents(bookTitleTextField, authorsTextField, numberOfPagesTextField,
+        leftPanel.addComponents(bookLabel, bookTitleTextField, authorsTextField, numberOfPagesTextField,
                 yearTextField, publishingHouseTextField, priceTextField, numberOfCopiesTextField,
-                pictureOfBookCoverImageUploader, createBookButton);
+                bookCover, createBookButton);
         leftPanel.setComponentAlignment(createBookButton, Alignment.TOP_LEFT);
 
         VerticalLayout rightPanel = new VerticalLayout();
@@ -611,12 +614,23 @@ public class AdminUI extends BaseUI {
         pictureOfBookCoverImageUploader.setWidth(100f, Unit.PERCENTAGE);
 
         Button createBookButton = new Button("Create", event -> {
-            boolean resultOfOperation;
+            Book createdBook;
+            Map<String, Object> bookParameters = new HashMap<>();
 
-            resultOfOperation = bookService.save(categoryField.getValue());
+            bookParameters.put("bookTitle", null);
+            bookParameters.put("authors", null);
+            bookParameters.put("categories", null);
+            bookParameters.put("numberOfPages", null);
+            bookParameters.put("year", null);
+            bookParameters.put("publishingHouse", null);
+            bookParameters.put("price", null);
+            bookParameters.put("numberOfCopies", null);
+            bookParameters.put("pictureOfBookCover", null);
 
-            Notification.show("Category \"" + categoryField.getValue() +
-                            ((resultOfOperation) ? "\" created." : " didn't created."),
+            createdBook = bookService.save(bookParameters);
+
+            Notification.show("Book \"" + bookTitleTextField.getValue() + " " + authorsTextField.getValue() +
+                            ((null != createdBook) ? "\" created." : " didn't created."),
                     Notification.Type.TRAY_NOTIFICATION);
         });
 
@@ -683,7 +697,8 @@ public class AdminUI extends BaseUI {
         Set<String> selectedItems = listWithUsers.getSelectedItems();
 
         Window confirmDialogWindow = new YesNoDialog("Confirmation",
-                "Do you really want to delete users: " + StringUtils.collectionToDelimitedString(selectedItems, ", "),
+                "Do you really want to delete users: " +
+                        StringUtils.collectionToDelimitedString(selectedItems, ", "),
                 resultIsYes -> {
                     if (resultIsYes) {
                         int countOfDeletedUsers = userService.delete(selectedItems);
@@ -703,12 +718,34 @@ public class AdminUI extends BaseUI {
         Set<String> selectedItems = listWithUsers.getSelectedItems();
 
         Window confirmDialogWindow = new YesNoDialog("Confirmation",
-                "Do you really want to delete roles: " + StringUtils.collectionToDelimitedString(selectedItems, ", "),
+                "Do you really want to delete roles: " +
+                        StringUtils.collectionToDelimitedString(selectedItems, ", "),
                 resultIsYes -> {
                     if (resultIsYes) {
                         int countOfDeletedUsers = roleService.delete(selectedItems);
                         createLeftPanelForRolesOfUsersMenu();
                         Notification.show(countOfDeletedUsers + " roles deleted",
+                                Notification.Type.TRAY_NOTIFICATION);
+                    }
+                });
+
+        confirmDialogWindow.center();
+        addWindow(confirmDialogWindow);
+    }
+
+    private void deleteBookButtonClick(Button.ClickEvent e) {
+        VerticalLayout panel = (VerticalLayout) createAndShowAllItemsPanel.getFirstComponent();
+        ListSelect<Book> listWithBooks = (ListSelect<Book>) panel.getComponent(0);
+        Set<Book> selectedItems = listWithBooks.getSelectedItems();
+
+        Window confirmDialogWindow = new YesNoDialog("Confirmation",
+                "Do you really want to delete books: " +
+                        StringUtils.collectionToDelimitedString(selectedItems, ", "),
+                resultIsYes -> {
+                    if (resultIsYes) {
+                        int countOfDeletedUsers = bookService.delete(selectedItems);
+                        createLeftPanelForRolesOfUsersMenu();
+                        Notification.show(countOfDeletedUsers + " books deleted",
                                 Notification.Type.TRAY_NOTIFICATION);
                     }
                 });
@@ -723,7 +760,8 @@ public class AdminUI extends BaseUI {
         Set<String> selectedItems = listWithUsers.getSelectedItems();
 
         Window confirmDialogWindow = new YesNoDialog("Confirmation",
-                "Do you really want to delete categories of books: " + StringUtils.collectionToDelimitedString(selectedItems, ", "),
+                "Do you really want to delete categories of books: " +
+                        StringUtils.collectionToDelimitedString(selectedItems, ", "),
                 resultIsYes -> {
                     if (resultIsYes) {
                         int countOfDeletedUsers = bookCategoryService.delete(selectedItems);

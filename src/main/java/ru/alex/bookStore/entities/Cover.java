@@ -12,15 +12,19 @@ public class Cover {
     private Long bookId;
 
     @Column(nullable = false)
-    private Byte[] pictureOfBookCover;
+    private byte[] pictureOfBookCover;
 
     public Cover() { }
 
-    public Byte[] getPictureOfBookCover() {
+    public Cover(byte[] pictureOfBookCover) {
+        this.pictureOfBookCover = pictureOfBookCover;
+    }
+
+    public byte[] getPictureOfBookCover() {
         return pictureOfBookCover;
     }
 
-    public void setPictureOfBookCover(Byte[] pictureOfBookCover) {
+    public void setPictureOfBookCover(byte[] pictureOfBookCover) {
         this.pictureOfBookCover = pictureOfBookCover;
     }
 }
