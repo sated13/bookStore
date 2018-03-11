@@ -1,6 +1,9 @@
 package ru.alex.bookStore.ui;
 
 import com.vaadin.data.Result;
+import com.vaadin.data.validator.BigDecimalRangeValidator;
+import com.vaadin.data.validator.RegexpValidator;
+import com.vaadin.data.validator.ShortRangeValidator;
 import com.vaadin.server.StreamResource;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.ui.datefield.DateResolution;
@@ -11,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import ru.alex.bookStore.entities.*;
+import ru.alex.bookStore.utils.ComponentValueValidation;
 import ru.alex.bookStore.utils.book.BookService;
 import ru.alex.bookStore.utils.bookCategory.BookCategoryService;
 import ru.alex.bookStore.utils.roles.RoleService;
@@ -633,6 +637,14 @@ public class AdminUI extends BaseUI {
                             ((null != createdBook) ? "\" created." : " didn't created."),
                     Notification.Type.TRAY_NOTIFICATION);
         });
+
+        ComponentValueValidation.validate(bookTitleTextField, new RegexpValidator(""));
+        ComponentValueValidation.validate(authorsTextField, );
+        ComponentValueValidation.validate(numberOfPagesTextField, );
+        ComponentValueValidation.validate(yearDateField, new ShortRangeValidator("Value should be from 0 to 20000", (short)0, (short)20000));
+        ComponentValueValidation.validate(publishingHouseTextField, );
+        ComponentValueValidation.validate(priceTextField, new BigDecimalRangeValidator("Value should have positive decimal format from 0 to 2000000", BigDecimal.valueOf(0l), BigDecimal.valueOf(2000000l));
+        ComponentValueValidation.validate(numberOfCopiesTextField, );
 
         leftPanel.addComponents(bookTitleTextField, authorsTextField, numberOfPagesTextField,
                 yearDateField, publishingHouseTextField, priceTextField, numberOfCopiesTextField,
