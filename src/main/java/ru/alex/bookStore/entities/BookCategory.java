@@ -1,9 +1,5 @@
 package ru.alex.bookStore.entities;
 
-import org.hibernate.Hibernate;
-import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
-import org.springframework.transaction.annotation.Transactional;
-
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Set;

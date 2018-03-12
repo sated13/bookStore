@@ -1,16 +1,17 @@
 package ru.alex.bookStore.ui;
 
 import com.vaadin.data.Result;
-import com.vaadin.data.validator.BigDecimalRangeValidator;
-import com.vaadin.data.validator.RegexpValidator;
-import com.vaadin.data.validator.ShortRangeValidator;
+import com.vaadin.data.validator.*;
+import com.vaadin.server.ErrorMessage;
 import com.vaadin.server.StreamResource;
+import com.vaadin.server.UserError;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.ui.datefield.DateResolution;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import ru.alex.bookStore.entities.*;
@@ -44,6 +45,8 @@ public class AdminUI extends BaseUI {
     UserService userService;
     @Autowired
     RoleService roleService;
+    @Autowired
+    ConversionService conversionService;
 
     Button logoutButtonBase = new Button("Logout", this::logoutButtonClicked);
     VerticalLayout globalPanel = new VerticalLayout();
@@ -490,6 +493,12 @@ public class AdminUI extends BaseUI {
         leftPanel.setHeight(100f, Unit.PERCENTAGE);
         leftPanel.setWidth(100f, Unit.PERCENTAGE);
 
+        VerticalLayout rightPanelCreateBook = new VerticalLayout();
+        rightPanelCreateBook.setHeight(100f, Unit.PERCENTAGE);
+        rightPanelCreateBook.setWidth(100f, Unit.PERCENTAGE);
+
+        //left panel
+
         leftPanel.addComponent(new Label("Book parameters"));
 
         TextField bookTitleTextField = new TextField("Title");
@@ -529,16 +538,16 @@ public class AdminUI extends BaseUI {
         TextField numberOfCopiesTextField = new TextField("Number of copies");
         numberOfCopiesTextField.setWidth(100f, Unit.PERCENTAGE);
 
-        ByteArrayOutputStream outputStreamForImage = new ByteArrayOutputStream(10240);
-
         class ImageUploader extends CustomComponent implements Upload.Receiver, Upload.SucceededListener,
                 Upload.FailedListener, Upload.ProgressListener {
 
             String filename;
+            ByteArrayOutputStream outputStreamForImage = new ByteArrayOutputStream(10240);
             ProgressBar progressBar = new ProgressBar(0.0f);
             Image coverImage = new Image("Cover");
             final HashSet<String> imageMimeTypes = new HashSet<>(Arrays.asList("image/gif", "image/png", "image/jpeg", "image/bmp"));
             Upload uploadComponent = new Upload("Upload cover", null);
+            Button resetImageButton = new Button("Reset", this::resetButtonClick);
             boolean isErrorFlag = false;
 
             public ImageUploader() {
@@ -552,7 +561,7 @@ public class AdminUI extends BaseUI {
                 content.setSpacing(true);
                 panel.setContent(content);
 
-                content.addComponents(uploadComponent, progressBar, coverImage);
+                content.addComponents(uploadComponent, resetImageButton, progressBar, coverImage);
 
                 progressBar.setVisible(false);
                 progressBar.setWidth(100f, Unit.PERCENTAGE);
@@ -612,6 +621,13 @@ public class AdminUI extends BaseUI {
                     }
                 }
             }
+
+            public void resetButtonClick(Button.ClickEvent event) {
+                progressBar.setVisible(false);
+                progressBar.setValue(0f);
+                coverImage.setVisible(false);
+                outputStreamForImage.reset();
+            }
         }
 
         ImageUploader pictureOfBookCoverImageUploader = new ImageUploader();
@@ -621,15 +637,43 @@ public class AdminUI extends BaseUI {
             Book createdBook;
             Map<String, Object> bookParameters = new HashMap<>();
 
-            bookParameters.put("bookTitle", null);
-            bookParameters.put("authors", null);
-            bookParameters.put("categories", null);
-            bookParameters.put("numberOfPages", null);
-            bookParameters.put("year", null);
-            bookParameters.put("publishingHouse", null);
-            bookParameters.put("price", null);
-            bookParameters.put("numberOfCopies", null);
-            bookParameters.put("pictureOfBookCover", null);
+            if (bookTitleTextField.getValue().isEmpty()) {
+                UserError error = new UserError("Title can't be empty");
+                bookTitleTextField.setComponentError(error);
+                return;
+            }
+            else {
+                bookTitleTextField.setComponentError(null);
+            }
+
+            if (authorsTextField.getValue().isEmpty()) {
+                UserError error = new UserError("Authors can't be empty");
+                authorsTextField.setComponentError(error);
+                return;
+            }
+            else {
+                authorsTextField.setComponentError(null);
+            }
+
+            ListSelect<String> listWithCategories = (ListSelect<String>) rightPanelCreateBook.getComponent(1);
+
+            if (listWithCategories.getSelectedItems().size() == 0) {
+                UserError error = new UserError("Should be selected 1 category at least");
+                rightPanelCreateBook.setComponentError(error);
+            }
+            else {
+                rightPanelCreateBook.setComponentError(null);
+            }
+
+            bookParameters.put("bookTitle", bookTitleTextField.getValue());
+            bookParameters.put("authors", Arrays.stream(authorsTextField.getValue().split(",")).map(item -> item.trim()).collect(Collectors.toSet()));
+            bookParameters.put("categories", bookCategoryService.findByCategories(listWithCategories.getSelectedItems()));
+            bookParameters.put("numberOfPages", numberOfPagesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfPagesTextField.getValue(), Integer.class));
+            bookParameters.put("year", (short)yearDateField.getValue().getYear());
+            bookParameters.put("publishingHouse", publishingHouseTextField.getValue());
+            bookParameters.put("price", priceTextField.getValue().isEmpty() ? BigDecimal.valueOf(0l) : conversionService.convert(priceTextField.getValue(), BigDecimal.class));
+            bookParameters.put("numberOfCopies", numberOfCopiesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfCopiesTextField.getValue(), Integer.class));
+            bookParameters.put("pictureOfBookCover", (pictureOfBookCoverImageUploader.outputStreamForImage.size() > 0) ? new Cover(pictureOfBookCoverImageUploader.outputStreamForImage.toByteArray()) : null);
 
             createdBook = bookService.save(bookParameters);
 
@@ -638,22 +682,24 @@ public class AdminUI extends BaseUI {
                     Notification.Type.TRAY_NOTIFICATION);
         });
 
-        ComponentValueValidation.validate(bookTitleTextField, new RegexpValidator(""));
-        ComponentValueValidation.validate(authorsTextField, );
-        ComponentValueValidation.validate(numberOfPagesTextField, );
-        ComponentValueValidation.validate(yearDateField, new ShortRangeValidator("Value should be from 0 to 20000", (short)0, (short)20000));
-        ComponentValueValidation.validate(publishingHouseTextField, );
-        ComponentValueValidation.validate(priceTextField, new BigDecimalRangeValidator("Value should have positive decimal format from 0 to 2000000", BigDecimal.valueOf(0l), BigDecimal.valueOf(2000000l));
-        ComponentValueValidation.validate(numberOfCopiesTextField, );
+        ComponentValueValidation.validate(bookTitleTextField,
+                new StringLengthValidator("Title can't be empty", 0, 6000), conversionService, String.class);
+        //ComponentValueValidation.validate(authorsTextField, );
+        //ComponentValueValidation.validate(numberOfPagesTextField, );
+        //ComponentValueValidation.validate(yearDateField,
+        //        new IntegerRangeValidator("Value should be from 0 to 20000", 0, 20000), conversionService, Integer.class);
+        //ComponentValueValidation.validate(publishingHouseTextField, );
+        ComponentValueValidation.validate(priceTextField,
+                new BigDecimalRangeValidator("Value should have positive decimal format from 0 to 2000000",
+                        BigDecimal.valueOf(0l), BigDecimal.valueOf(2000000l)), conversionService, BigDecimal.class);
+        //ComponentValueValidation.validate(numberOfCopiesTextField, );
 
         leftPanel.addComponents(bookTitleTextField, authorsTextField, numberOfPagesTextField,
                 yearDateField, publishingHouseTextField, priceTextField, numberOfCopiesTextField,
                 pictureOfBookCoverImageUploader, createBookButton);
         leftPanel.setComponentAlignment(createBookButton, Alignment.TOP_LEFT);
 
-        VerticalLayout rightPanel = new VerticalLayout();
-        rightPanel.setHeight(100f, Unit.PERCENTAGE);
-        rightPanel.setWidth(100f, Unit.PERCENTAGE);
+        //right panel
 
         ListSelect<String> listWithCategories = new ListSelect<>();
         listWithCategories.setWidth(100f, Unit.PERCENTAGE);
@@ -661,10 +707,10 @@ public class AdminUI extends BaseUI {
 
         listWithCategories.setItems(bookCategoryService.getAllStringCategories());
 
-        rightPanel.addComponents(new Label("Choose book categories"), listWithCategories);
-        rightPanel.setHeight(100f, Unit.PERCENTAGE);
+        rightPanelCreateBook.addComponents(new Label("Choose book categories"), listWithCategories);
+        rightPanelCreateBook.setHeight(100f, Unit.PERCENTAGE);
 
-        createBookSplitLayout.addComponents(leftPanel, rightPanel);
+        createBookSplitLayout.addComponents(leftPanel, rightPanelCreateBook);
 
         createBookLayout.addComponent(createBookSplitLayout);
 

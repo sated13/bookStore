@@ -16,6 +16,8 @@ public interface BookCategoryService {
 
     BookCategory findByCategory(String category);
 
+    Set<BookCategory> findByCategories(Set<String> categories);
+
     List<BookCategory> getAllCategories();
 
     List<String> getAllStringCategories();

@@ -9,10 +9,7 @@ import ru.alex.bookStore.entities.Book;
 import ru.alex.bookStore.entities.BookCategory;
 import ru.alex.bookStore.repository.BookCategoryRepository;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Transactional
@@ -78,6 +75,17 @@ public class BookCategoryServiceImpl implements BookCategoryService{
             //ToDo: add logging
         }
         return userRole;
+    }
+
+    @Override
+    public Set<BookCategory> findByCategories(Set<String> categories) {
+        Set<BookCategory> foundedCategories = new HashSet<>();
+        BookCategory tempCategory;
+        for(String category: categories) {
+            tempCategory = findByCategory(category);
+            if (null != tempCategory) foundedCategories.add(tempCategory);
+        }
+        return foundedCategories;
     }
 
     public List<BookCategory> getAllCategories() {

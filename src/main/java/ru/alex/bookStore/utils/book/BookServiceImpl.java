@@ -48,7 +48,7 @@ public class BookServiceImpl implements BookService {
                     break;
                 }
                 case "publishingHouse": {
-                    newBook.setNumberOfPages((Integer) bookParameters.get(key));
+                    newBook.setPublishingHouse((String) bookParameters.get(key));
                     break;
                 }
                 case "price": {
