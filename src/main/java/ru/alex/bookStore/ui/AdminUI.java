@@ -2,7 +2,6 @@ package ru.alex.bookStore.ui;
 
 import com.vaadin.data.Result;
 import com.vaadin.data.validator.*;
-import com.vaadin.server.ErrorMessage;
 import com.vaadin.server.StreamResource;
 import com.vaadin.server.UserError;
 import com.vaadin.server.VaadinRequest;
@@ -10,6 +9,7 @@ import com.vaadin.shared.ui.datefield.DateResolution;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,10 +22,8 @@ import ru.alex.bookStore.utils.roles.RoleService;
 import ru.alex.bookStore.utils.ui.YesNoDialog;
 import ru.alex.bookStore.utils.users.UserService;
 
-import javax.persistence.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -251,7 +249,7 @@ public class AdminUI extends BaseUI {
             Set<Book> selected = event.getAllSelectedItems();
             //Notification.show(selected.size() + " books selected.", Notification.Type.TRAY_NOTIFICATION);
             if (selected.size() == 1) {
-                createRightPanelForBooksMenu(selected.iterator().next());
+                createRightTopPanelForBooksMenu(selected.iterator().next());
             }
         });
         listWithBooks.setItems(bookService.getAllBooks());
@@ -275,7 +273,7 @@ public class AdminUI extends BaseUI {
         addCreateAndShowAllItemsPanelOnGlobalPanel();
     }
 
-    private void createRightPanelForBooksMenu(Book selectedBook) {
+    private void createRightTopPanelForBooksMenu(Book selectedBook) {
         Label bookLabel = new Label("Book");
 
         TextField bookTitleTextField = new TextField("Title");
@@ -290,53 +288,58 @@ public class AdminUI extends BaseUI {
 
         TextField numberOfPagesTextField = new TextField("Number of pages");
         numberOfPagesTextField.setWidth(100f, Unit.PERCENTAGE);
-        numberOfPagesTextField.setValue(selectedBook.getNumberOfPages().toString());
+        numberOfPagesTextField.setValue((null == selectedBook.getNumberOfPages()) ? "0" : selectedBook.getNumberOfPages().toString());
         numberOfPagesTextField.setEnabled(false);
 
         TextField yearTextField = new TextField("Year");
         yearTextField.setWidth(100f, Unit.PERCENTAGE);
-        yearTextField.setValue(selectedBook.getYear().toString());
+        yearTextField.setValue((null == selectedBook.getYear()) ? "0" : selectedBook.getYear().toString());
         yearTextField.setEnabled(false);
 
         TextField publishingHouseTextField = new TextField("Publishing house");
         publishingHouseTextField.setWidth(100f, Unit.PERCENTAGE);
-        publishingHouseTextField.setValue(selectedBook.getPublishingHouse());
+        publishingHouseTextField.setValue((null == selectedBook.getPublishingHouse()) ? "" : selectedBook.getPublishingHouse());
         publishingHouseTextField.setEnabled(false);
 
         TextField priceTextField = new TextField("Price");
         priceTextField.setWidth(100f, Unit.PERCENTAGE);
-        priceTextField.setValue(selectedBook.getPrice().toString());
+        priceTextField.setValue((null == selectedBook.getPrice()) ? "0" : selectedBook.getPrice().toString());
         priceTextField.setEnabled(false);
 
         TextField numberOfCopiesTextField = new TextField("Number of copies");
         numberOfCopiesTextField.setWidth(100f, Unit.PERCENTAGE);
-        numberOfCopiesTextField.setValue(selectedBook.getNumberOfCopies().toString());
+        numberOfCopiesTextField.setValue((null == selectedBook.getNumberOfCopies()) ? "0" : selectedBook.getNumberOfCopies().toString());
         numberOfCopiesTextField.setEnabled(false);
 
         Image bookCover;
 
+        //Hibernate.initialize(selectedBook.getPictureOfBookCover());
+        Cover cover = bookService.getBookCover(selectedBook);
         bookCover = new Image(null, new StreamResource(() -> {
-            ByteArrayInputStream byteArrayInputStream =
-                    new ByteArrayInputStream(selectedBook.getPictureOfBookCover().getPictureOfBookCover());
-            return byteArrayInputStream;}, null));
+            if (null != cover && cover.isPresented()) {
+                ByteArrayInputStream byteArrayInputStream =
+                        new ByteArrayInputStream(cover.getPictureOfBookCover());
+                return byteArrayInputStream;
+            }
+            return null;
+        }, "cover"));
         bookCover.setWidth(100f, Unit.PERCENTAGE);
 
-        Button createBookButton = new Button("Create");
+        TextField textFieldWithCategories = new TextField("Categories");
+        textFieldWithCategories.setWidth(100f, Unit.PERCENTAGE);
+        textFieldWithCategories.setHeight(100f, Unit.PERCENTAGE);
+        textFieldWithCategories.setEnabled(false);
 
-        leftPanel.addComponents(bookLabel, bookTitleTextField, authorsTextField, numberOfPagesTextField,
-                yearTextField, publishingHouseTextField, priceTextField, numberOfCopiesTextField,
-                bookCover, createBookButton);
-        leftPanel.setComponentAlignment(createBookButton, Alignment.TOP_LEFT);
+        textFieldWithCategories.setValue(StringUtils.collectionToDelimitedString(bookService.getBookCategories(selectedBook), ", "));
+
+        rightTopPanelOnRightPanelComponents.removeAllComponents();
+        rightTopPanelOnRightPanelComponents.addComponents(bookLabel, bookTitleTextField, authorsTextField, numberOfPagesTextField,
+                yearTextField, publishingHouseTextField, priceTextField, numberOfCopiesTextField, textFieldWithCategories,
+                bookCover);
 
         VerticalLayout rightPanel = new VerticalLayout();
         rightPanel.setHeight(100f, Unit.PERCENTAGE);
         rightPanel.setWidth(100f, Unit.PERCENTAGE);
-
-        ListSelect<String> listWithCategories = new ListSelect<>();
-        listWithCategories.setWidth(100f, Unit.PERCENTAGE);
-        listWithCategories.setHeight(100f, Unit.PERCENTAGE);
-
-        listWithCategories.setItems(bookCategoryService.getAllStringCategories());
     }
 
     private void createLeftPanelForCategoriesOfBooksMenu() {
@@ -375,17 +378,17 @@ public class AdminUI extends BaseUI {
     }
 
     private void createRightTopPanelForCategoriesOfBookMenu(String selectedCategory) {
-        ListSelect<String> booksForSelectedCategiry = new ListSelect<>();
-        booksForSelectedCategiry.setWidth(100f, Unit.PERCENTAGE);
+        ListSelect<String> booksForSelectedCategory = new ListSelect<>();
+        booksForSelectedCategory.setWidth(100f, Unit.PERCENTAGE);
 
         Label usersLabel = new Label("Books");
         Set<Book> books = bookCategoryService.getBooksByCategory(selectedCategory);
-        booksForSelectedCategiry.setItems(books.stream().map(Book::toString).collect(Collectors.toList()));
+        booksForSelectedCategory.setItems(books.stream().map(Book::toString).collect(Collectors.toList()));
 
         rightTopPanelOnRightPanelComponents.removeAllComponents();
-        rightTopPanelOnRightPanelComponents.addComponents(usersLabel, booksForSelectedCategiry);
+        rightTopPanelOnRightPanelComponents.addComponents(usersLabel, booksForSelectedCategory);
         rightTopPanelOnRightPanelComponents.setComponentAlignment(usersLabel, Alignment.TOP_CENTER);
-        rightTopPanelOnRightPanelComponents.setComponentAlignment(booksForSelectedCategiry, Alignment.TOP_CENTER);
+        rightTopPanelOnRightPanelComponents.setComponentAlignment(booksForSelectedCategory, Alignment.TOP_CENTER);
     }
 
     private void createUserButtonClick(Button.ClickEvent e) {
@@ -571,14 +574,13 @@ public class AdminUI extends BaseUI {
             }
 
             public OutputStream receiveUpload(String filename,
-                                              String mimeType){
+                                              String mimeType) {
                 if (imageMimeTypes.contains(mimeType)) {
                     this.filename = filename;
                     outputStreamForImage.reset();
                     isErrorFlag = false;
                     return outputStreamForImage;
-                }
-                else {
+                } else {
                     isErrorFlag = true;
                     uploadComponent.interruptUpload();
                 }
@@ -641,8 +643,7 @@ public class AdminUI extends BaseUI {
                 UserError error = new UserError("Title can't be empty");
                 bookTitleTextField.setComponentError(error);
                 return;
-            }
-            else {
+            } else {
                 bookTitleTextField.setComponentError(null);
             }
 
@@ -650,30 +651,32 @@ public class AdminUI extends BaseUI {
                 UserError error = new UserError("Authors can't be empty");
                 authorsTextField.setComponentError(error);
                 return;
-            }
-            else {
+            } else {
                 authorsTextField.setComponentError(null);
             }
 
             ListSelect<String> listWithCategories = (ListSelect<String>) rightPanelCreateBook.getComponent(1);
 
-            if (listWithCategories.getSelectedItems().size() == 0) {
+            if (listWithCategories.getSelectedItems().isEmpty()) {
                 UserError error = new UserError("Should be selected 1 category at least");
-                rightPanelCreateBook.setComponentError(error);
-            }
-            else {
-                rightPanelCreateBook.setComponentError(null);
+                listWithCategories.setComponentError(error);
+                return;
+            } else {
+                listWithCategories.setComponentError(null);
             }
 
             bookParameters.put("bookTitle", bookTitleTextField.getValue());
             bookParameters.put("authors", Arrays.stream(authorsTextField.getValue().split(",")).map(item -> item.trim()).collect(Collectors.toSet()));
             bookParameters.put("categories", bookCategoryService.findByCategories(listWithCategories.getSelectedItems()));
             bookParameters.put("numberOfPages", numberOfPagesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfPagesTextField.getValue(), Integer.class));
-            bookParameters.put("year", (short)yearDateField.getValue().getYear());
+            bookParameters.put("year", (null != yearDateField.getValue()) ? (short) yearDateField.getValue().getYear() : (short) 0);
             bookParameters.put("publishingHouse", publishingHouseTextField.getValue());
-            bookParameters.put("price", priceTextField.getValue().isEmpty() ? BigDecimal.valueOf(0l) : conversionService.convert(priceTextField.getValue(), BigDecimal.class));
+            bookParameters.put("price", priceTextField.getValue().isEmpty() ? BigDecimal.ZERO : conversionService.convert(priceTextField.getValue(), BigDecimal.class));
             bookParameters.put("numberOfCopies", numberOfCopiesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfCopiesTextField.getValue(), Integer.class));
-            bookParameters.put("pictureOfBookCover", (pictureOfBookCoverImageUploader.outputStreamForImage.size() > 0) ? new Cover(pictureOfBookCoverImageUploader.outputStreamForImage.toByteArray()) : null);
+
+            if (pictureOfBookCoverImageUploader.outputStreamForImage.size() > 0) {
+                bookParameters.put("pictureOfBookCover", pictureOfBookCoverImageUploader.outputStreamForImage.toByteArray());
+            }
 
             createdBook = bookService.save(bookParameters);
 

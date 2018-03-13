@@ -14,7 +14,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "books")
-@Transactional
+//@Transactional
 public class Book implements Serializable {
 
     @Id
@@ -31,13 +31,14 @@ public class Book implements Serializable {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "books_categories",
             joinColumns = @JoinColumn(name = "book_id", referencedColumnName = "book_id"),
-            inverseJoinColumns = @JoinColumn(name = "book_category_id", referencedColumnName= "book_category_id"))
+            inverseJoinColumns = @JoinColumn(name = "book_category_id", referencedColumnName = "book_category_id"))
     private Set<BookCategory> categories = new HashSet<>();
     private Integer numberOfPages = 0;
     private Short year = 0;
     private String publishingHouse = "";
     private BigDecimal price = new BigDecimal(0);
     private Integer numberOfCopies = 0;
+
     @OneToOne(fetch = FetchType.LAZY)
     private Cover pictureOfBookCover;
 
@@ -53,8 +54,7 @@ public class Book implements Serializable {
     }
 
     public Set<BookCategory> getCategories() {
-        Hibernate.initialize(categories);
-        return Collections.unmodifiableSet(categories);
+        return categories;
     }
 
     public Integer getNumberOfPages() {

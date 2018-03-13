@@ -9,6 +9,7 @@ import ru.alex.bookStore.entities.Book;
 import ru.alex.bookStore.entities.BookCategory;
 import ru.alex.bookStore.entities.Cover;
 import ru.alex.bookStore.repository.BookRepository;
+import ru.alex.bookStore.utils.cover.CoverService;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -20,10 +21,13 @@ public class BookServiceImpl implements BookService {
 
     @Autowired
     BookRepository bookRepository;
+    @Autowired
+    CoverService coverService;
 
     @Override
     public Book save(Map<String, Object> bookParameters) {
         Book newBook = new Book();
+        Cover cover = new Cover();
 
         for(String key: bookParameters.keySet()) {
             switch (key) {
@@ -60,13 +64,16 @@ public class BookServiceImpl implements BookService {
                     break;
                 }
                 case "pictureOfBookCover": {
-                    newBook.setPictureOfBookCover(new Cover((byte[]) bookParameters.get(key)));
+                    cover = new Cover((byte[]) bookParameters.get(key));
+                    cover.setPresented(true);
                     break;
                 }
             }
         }
 
         try {
+            newBook.setPictureOfBookCover(cover);
+            coverService.save(cover);
             bookRepository.save(newBook);
         }
         catch (Exception e) {
