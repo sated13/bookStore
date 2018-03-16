@@ -18,13 +18,17 @@ public interface UserService {
 
     User findByUsername(String username);
 
+    Set<User> findByUserNames(Set<String> userNames);
+
     List<User> getAllUsers();
 
-    List<String> getAllUsernames();
+    List<String> getAllUserNames();
 
     boolean passwordIsCorrect(String password, String hashedPassword);
 
     boolean isAdmin(String username);
 
     boolean isAdmin(User user);
+
+    boolean changeUserDetails(String user, String newUserName, String password, Set<UserRole> roles);
 }

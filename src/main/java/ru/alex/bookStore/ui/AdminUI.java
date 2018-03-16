@@ -9,7 +9,6 @@ import com.vaadin.shared.ui.datefield.DateResolution;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +18,7 @@ import ru.alex.bookStore.utils.ComponentValueValidation;
 import ru.alex.bookStore.utils.book.BookService;
 import ru.alex.bookStore.utils.bookCategory.BookCategoryService;
 import ru.alex.bookStore.utils.roles.RoleService;
+import ru.alex.bookStore.utils.ui.ImageUploader;
 import ru.alex.bookStore.utils.ui.YesNoDialog;
 import ru.alex.bookStore.utils.users.UserService;
 
@@ -30,6 +30,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @SpringUI(path = "/adminPanel")
@@ -50,9 +51,9 @@ public class AdminUI extends BaseUI {
     VerticalLayout globalPanel = new VerticalLayout();
     HorizontalSplitPanel createAndShowAllItemsPanel = new HorizontalSplitPanel();
     VerticalLayout leftPanel = new VerticalLayout();
-    VerticalSplitPanel rightPanel = new VerticalSplitPanel();
-    Panel rightTopPanelOnRightPanel = new Panel();
-    FormLayout rightTopPanelOnRightPanelComponents = new FormLayout();
+    VerticalLayout rightPanel = new VerticalLayout();
+    //Panel rightTopPanelOnRightPanel = new Panel();
+    //FormLayout rightTopPanelOnRightPanelComponents = new FormLayout();
 
     @Override
     public void init(VaadinRequest vaadinRequest) {
@@ -93,8 +94,8 @@ public class AdminUI extends BaseUI {
         MenuBar.MenuItem categoriesOfBooksMenuItem = menuBar.addItem("Categories of books",
                 (selectedMenuItem) -> createLeftPanelForCategoriesOfBooksMenu());
 
-        rightTopPanelOnRightPanelComponents.setHeight("600px");
-        rightTopPanelOnRightPanelComponents.setStyleName(ValoTheme.LAYOUT_WELL);
+        //rightTopPanelOnRightPanelComponents.setHeight("600px");
+        //rightTopPanelOnRightPanelComponents.setStyleName(ValoTheme.LAYOUT_WELL);
 
         createAndShowAllItemsPanel.removeAllComponents();
         createAndShowAllItemsPanel.addComponent(leftPanel);
@@ -111,8 +112,8 @@ public class AdminUI extends BaseUI {
         leftPanel.removeAllComponents();
         rightPanel.removeAllComponents();
 
-        rightTopPanelOnRightPanelComponents.removeAllComponents();
-        rightPanel.addComponent(rightTopPanelOnRightPanelComponents);
+        //rightTopPanelOnRightPanelComponents.removeAllComponents();
+        //rightPanel.addComponent(rightTopPanelOnRightPanelComponents);
     }
 
     private void logoutButtonClicked(Button.ClickEvent e) {
@@ -134,15 +135,7 @@ public class AdminUI extends BaseUI {
         listWithUsers.setWidth(100f, Unit.PERCENTAGE);
         listWithUsers.setHeight(100f, Unit.PERCENTAGE);
 
-        listWithUsers.setItems(userService.getAllUsernames());
-
-        listWithUsers.addSelectionListener(event -> {
-            Set<String> selected = event.getAllSelectedItems();
-            //Notification.show(selected.size() + " users selected.", Notification.Type.TRAY_NOTIFICATION);
-            if (selected.size() == 1) {
-                createRightTopPanelForUserMenu(selected.iterator().next());
-            }
-        });
+        listWithUsers.setItems(userService.getAllUserNames());
 
         VerticalLayout panelWithButtons = new VerticalLayout();
         panelWithButtons.setWidth(100f, Unit.PERCENTAGE);
@@ -160,33 +153,90 @@ public class AdminUI extends BaseUI {
         leftPanel.setComponentAlignment(usersLabel, Alignment.TOP_LEFT);
         leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
 
+        leftPanel.addLayoutClickListener(event -> {
+            if (event.getMouseEventDetails().isDoubleClick()) {
+                Component clickedComponent = event.getClickedComponent();
+                if (ListSelect.class.equals(event.getClickedComponent().getClass()) && ((ListSelect)clickedComponent).getSelectedItems().size() == 1) {
+                    selectedUserDoubleClick(((ListSelect<String>)clickedComponent).getSelectedItems().iterator().next());
+                }
+            }
+        });
+
         addCreateAndShowAllItemsPanelOnGlobalPanel();
     }
 
-    private void createRightTopPanelForUserMenu(String selectedUser) {
-        Label loginLabel = new Label("Login");
+    private void selectedUserDoubleClick(String selectedUser) {
+        Window userDetailsWindow = new Window("User details");
 
-        TextField usernameTextField = new TextField();
-        usernameTextField.setWidth(100f, Unit.PERCENTAGE);
-        usernameTextField.setEnabled(false);
+        FormLayout userDetailsLayout = new FormLayout();
 
-        ListSelect<String> rolesForSelectedUser = new ListSelect<>();
-        rolesForSelectedUser.setWidth(100f, Unit.PERCENTAGE);
+        VerticalLayout userDetailsPanel = new VerticalLayout();
+        userDetailsPanel.setHeight(100f, Unit.PERCENTAGE);
+        userDetailsPanel.setWidth(100f, Unit.PERCENTAGE);
 
-        Label rolesLabel = new Label("Roles");
+        ListSelect<String> listWithRoles = new ListSelect<>();
+
+        Button saveUserDetailsButton = new Button("Save");
+        saveUserDetailsButton.addClickListener((event) -> {
+
+            Set<String> selectedRoles = listWithRoles.getSelectedItems();
+
+            if (selectedRoles.isEmpty()) {
+                Notification.show("Should be selected 1 role at least", Notification.Type.ERROR_MESSAGE);
+                return;
+            }
+
+            AtomicBoolean resultOfOperation = new AtomicBoolean(false);
+
+            if (null != passwordField.getValue() &&
+                    passwordField.getValue().equals(confirmPasswordField.getValue())) {
+
+                Window confirmDialogWindow = new YesNoDialog("Confirmation",
+                        "Do you really want to change user details: " +
+                                StringUtils.collectionToDelimitedString(selectedRoles, ", "),
+                        resultIsYes -> {
+                            if (resultIsYes) {
+                                resultOfOperation.set(userService.changeUserDetails(selectedUser, usernameField.getValue(),
+                                        passwordField.getValue(), roleService.findByRoles(selectedRoles)));
+                            }
+                        });
+
+                confirmDialogWindow.center();
+                addWindow(confirmDialogWindow);
+            }
+
+            Notification.show("Changes for user \"" + usernameField.getValue() +
+                            ((resultOfOperation.get()) ? "\" were saved." : " weren't saved."),
+                    Notification.Type.TRAY_NOTIFICATION);
+        });
+
+        userDetailsPanel.addComponent(new Label("User credentials"));
+
+        usernameField.setValue("");
+        passwordField.setValue("");
+        confirmPasswordField.setValue("");
+
+        userDetailsPanel.addComponents(usernameField, passwordField, confirmPasswordField, saveUserDetailsButton);
+        userDetailsPanel.setHeight(100f, Unit.PERCENTAGE);
+
+        listWithRoles.setWidth(100f, Unit.PERCENTAGE);
+        listWithRoles.setHeight(100f, Unit.PERCENTAGE);
+
+        listWithRoles.setItems(roleService.getAllStringRoles());
 
         User user = userService.findByUsername(selectedUser);
+        for (UserRole role: user.getRoles()) {
+            listWithRoles.select(role.getAuthority());
+        }
 
-        rolesForSelectedUser.setItems(user.getRoles().stream()
-                .map(UserRole::toString).collect(Collectors.toSet()));
-        usernameTextField.setValue(user.getUsername());
+        userDetailsLayout.addComponents(userDetailsPanel, new Label("Roles"), listWithRoles);
+        userDetailsLayout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
 
-        rightTopPanelOnRightPanelComponents.removeAllComponents();
-        rightTopPanelOnRightPanelComponents.addComponents(loginLabel, usernameTextField, rolesLabel, rolesForSelectedUser);
-        rightTopPanelOnRightPanelComponents.setComponentAlignment(loginLabel, Alignment.TOP_CENTER);
-        rightTopPanelOnRightPanelComponents.setComponentAlignment(usernameTextField, Alignment.TOP_CENTER);
-        rightTopPanelOnRightPanelComponents.setComponentAlignment(rolesLabel, Alignment.TOP_CENTER);
-        rightTopPanelOnRightPanelComponents.setComponentAlignment(rolesForSelectedUser, Alignment.TOP_CENTER);
+        userDetailsWindow.setContent(userDetailsLayout);
+        userDetailsWindow.center();
+        userDetailsWindow.setModal(true);
+        userDetailsWindow.addCloseListener(e1 -> createLeftPanelForUserMenu());
+        addWindow(userDetailsWindow);
     }
 
     private void createLeftPanelForRolesOfUsersMenu() {
@@ -196,13 +246,6 @@ public class AdminUI extends BaseUI {
         listWithRoles.setWidth(100f, Unit.PERCENTAGE);
         listWithRoles.setHeight(100f, Unit.PERCENTAGE);
 
-        listWithRoles.addSelectionListener(event -> {
-            Set<String> selected = event.getAllSelectedItems();
-            //Notification.show(selected.size() + " roles of users selected.", Notification.Type.TRAY_NOTIFICATION);
-            if (selected.size() == 1) {
-                createRightTopPanelForRolesOfUsersMenu(selected.iterator().next());
-            }
-        });
         listWithRoles.setItems(roleService.getAllStringRoles());
 
         VerticalLayout panelWithButtons = new VerticalLayout();
@@ -221,10 +264,25 @@ public class AdminUI extends BaseUI {
         leftPanel.setComponentAlignment(rolesLabel, Alignment.TOP_LEFT);
         leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
 
+        leftPanel.addLayoutClickListener(event -> {
+            if (event.getMouseEventDetails().isDoubleClick()) {
+                Component clickedComponent = event.getClickedComponent();
+                if (ListSelect.class.equals(event.getClickedComponent().getClass()) && ((ListSelect)clickedComponent).getSelectedItems().size() == 1) {
+                    selectedRoleDoubleClick(((ListSelect<String>)clickedComponent).getSelectedItems().iterator().next());
+                }
+            }
+        });
+
         addCreateAndShowAllItemsPanelOnGlobalPanel();
     }
 
-    private void createRightTopPanelForRolesOfUsersMenu(String selectedRole) {
+    private void selectedRoleDoubleClick(String selectedRole) {
+        Window roleDetailsWindow = new Window("Role details");
+
+        FormLayout roleDetailsLayout = new FormLayout();
+
+        TextField roleNameTextField = new TextField("Role name");
+
         ListSelect<String> usersForSelectedRole = new ListSelect<>();
         usersForSelectedRole.setWidth(100f, Unit.PERCENTAGE);
 
@@ -232,10 +290,41 @@ public class AdminUI extends BaseUI {
         Set<User> users = roleService.getUsersByRole(selectedRole);
         usersForSelectedRole.setItems(users.stream().map(User::getUsername).collect(Collectors.toList()));
 
-        rightTopPanelOnRightPanelComponents.removeAllComponents();
-        rightTopPanelOnRightPanelComponents.addComponents(usersLabel, usersForSelectedRole);
-        rightTopPanelOnRightPanelComponents.setComponentAlignment(usersLabel, Alignment.TOP_CENTER);
-        rightTopPanelOnRightPanelComponents.setComponentAlignment(usersForSelectedRole, Alignment.TOP_CENTER);
+        Button saveRoleDetailsButton = new Button("Save");
+
+        saveRoleDetailsButton.addClickListener(event -> {
+            AtomicBoolean resultOfOperation = new AtomicBoolean(false);
+
+            if (!StringUtils.isEmpty(roleNameTextField.getValue())) {
+
+                Window confirmDialogWindow = new YesNoDialog("Confirmation",
+                        "Do you really want to change role details: " +
+                                selectedRole,
+                        resultIsYes -> {
+                            if (resultIsYes) {
+                                Set<User> usersWithRole = userService.findByUserNames(usersForSelectedRole.getSelectedItems());
+                                resultOfOperation.set(
+                                        roleService.changeRoleDetails(selectedRole, roleNameTextField.getValue(), usersWithRole));
+                            }
+                        });
+
+                confirmDialogWindow.center();
+                addWindow(confirmDialogWindow);
+            }
+
+            Notification.show("Changes for role \"" + selectedRole +
+                            ((resultOfOperation.get()) ? "\" were saved." : " weren't saved."),
+                    Notification.Type.TRAY_NOTIFICATION);
+        });
+
+        roleDetailsLayout.addComponents(roleNameTextField, usersLabel, usersForSelectedRole, saveRoleDetailsButton);
+        roleDetailsLayout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+        roleDetailsWindow.setContent(roleDetailsLayout);
+        roleDetailsWindow.center();
+        roleDetailsWindow.setModal(true);
+        roleDetailsWindow.addCloseListener(e1 -> createLeftPanelForRolesOfUsersMenu());
+        addWindow(roleDetailsWindow);
     }
 
     private void createLeftPanelForBooksMenu() {
@@ -249,7 +338,7 @@ public class AdminUI extends BaseUI {
             Set<Book> selected = event.getAllSelectedItems();
             //Notification.show(selected.size() + " books selected.", Notification.Type.TRAY_NOTIFICATION);
             if (selected.size() == 1) {
-                createRightTopPanelForBooksMenu(selected.iterator().next());
+                selectedBookDoubleClick(selected.iterator().next());
             }
         });
         listWithBooks.setItems(bookService.getAllBooks());
@@ -270,50 +359,62 @@ public class AdminUI extends BaseUI {
         leftPanel.setComponentAlignment(booksLabel, Alignment.TOP_LEFT);
         leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
 
+        leftPanel.addLayoutClickListener(event -> {
+            if (event.getMouseEventDetails().isDoubleClick()) {
+                Component clickedComponent = event.getClickedComponent();
+                if (ListSelect.class.equals(event.getClickedComponent().getClass())) {
+
+                }
+            }
+        });
+
         addCreateAndShowAllItemsPanelOnGlobalPanel();
     }
 
-    private void createRightTopPanelForBooksMenu(Book selectedBook) {
+    private void selectedBookDoubleClick(Book selectedBook) {
+        Window bookDetailsWindow = new Window("Book details");
+
+        FormLayout bookDetailsLayout = new FormLayout();
+
         Label bookLabel = new Label("Book");
 
         TextField bookTitleTextField = new TextField("Title");
         bookTitleTextField.setWidth(100f, Unit.PERCENTAGE);
         bookTitleTextField.setValue(selectedBook.getBookTitle());
-        bookTitleTextField.setEnabled(false);
+        //bookTitleTextField.setEnabled(false);
 
         TextField authorsTextField = new TextField("Authors");
         authorsTextField.setWidth(100f, Unit.PERCENTAGE);
         authorsTextField.setValue(StringUtils.collectionToDelimitedString(selectedBook.getAuthors(), ", "));
-        authorsTextField.setEnabled(false);
+        //authorsTextField.setEnabled(false);
 
         TextField numberOfPagesTextField = new TextField("Number of pages");
         numberOfPagesTextField.setWidth(100f, Unit.PERCENTAGE);
         numberOfPagesTextField.setValue((null == selectedBook.getNumberOfPages()) ? "0" : selectedBook.getNumberOfPages().toString());
-        numberOfPagesTextField.setEnabled(false);
+        //numberOfPagesTextField.setEnabled(false);
 
         TextField yearTextField = new TextField("Year");
         yearTextField.setWidth(100f, Unit.PERCENTAGE);
         yearTextField.setValue((null == selectedBook.getYear()) ? "0" : selectedBook.getYear().toString());
-        yearTextField.setEnabled(false);
+        //yearTextField.setEnabled(false);
 
         TextField publishingHouseTextField = new TextField("Publishing house");
         publishingHouseTextField.setWidth(100f, Unit.PERCENTAGE);
         publishingHouseTextField.setValue((null == selectedBook.getPublishingHouse()) ? "" : selectedBook.getPublishingHouse());
-        publishingHouseTextField.setEnabled(false);
+        //publishingHouseTextField.setEnabled(false);
 
         TextField priceTextField = new TextField("Price");
         priceTextField.setWidth(100f, Unit.PERCENTAGE);
         priceTextField.setValue((null == selectedBook.getPrice()) ? "0" : selectedBook.getPrice().toString());
-        priceTextField.setEnabled(false);
+        //priceTextField.setEnabled(false);
 
         TextField numberOfCopiesTextField = new TextField("Number of copies");
         numberOfCopiesTextField.setWidth(100f, Unit.PERCENTAGE);
         numberOfCopiesTextField.setValue((null == selectedBook.getNumberOfCopies()) ? "0" : selectedBook.getNumberOfCopies().toString());
-        numberOfCopiesTextField.setEnabled(false);
+        //numberOfCopiesTextField.setEnabled(false);
 
         Image bookCover;
 
-        //Hibernate.initialize(selectedBook.getPictureOfBookCover());
         Cover cover = bookService.getBookCover(selectedBook);
         bookCover = new Image(null, new StreamResource(() -> {
             if (null != cover && cover.isPresented()) {
@@ -328,18 +429,26 @@ public class AdminUI extends BaseUI {
         TextField textFieldWithCategories = new TextField("Categories");
         textFieldWithCategories.setWidth(100f, Unit.PERCENTAGE);
         textFieldWithCategories.setHeight(100f, Unit.PERCENTAGE);
-        textFieldWithCategories.setEnabled(false);
+        //textFieldWithCategories.setEnabled(false);
 
         textFieldWithCategories.setValue(StringUtils.collectionToDelimitedString(bookService.getBookCategories(selectedBook), ", "));
 
-        rightTopPanelOnRightPanelComponents.removeAllComponents();
-        rightTopPanelOnRightPanelComponents.addComponents(bookLabel, bookTitleTextField, authorsTextField, numberOfPagesTextField,
+        bookDetailsLayout.addComponents(bookLabel, bookTitleTextField, authorsTextField, numberOfPagesTextField,
                 yearTextField, publishingHouseTextField, priceTextField, numberOfCopiesTextField, textFieldWithCategories,
                 bookCover);
+        bookDetailsLayout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
 
-        VerticalLayout rightPanel = new VerticalLayout();
+        /*VerticalLayout rightPanel = new VerticalLayout();
         rightPanel.setHeight(100f, Unit.PERCENTAGE);
-        rightPanel.setWidth(100f, Unit.PERCENTAGE);
+        rightPanel.setWidth(100f, Unit.PERCENTAGE);*/
+
+        //bookDetailsLayout.addComponents(categoryNameField, booksLabel, booksForSelectedCategory, saveNewCategoryDetailsButton);
+
+        bookDetailsWindow.setContent(bookDetailsLayout);
+        bookDetailsWindow.center();
+        bookDetailsWindow.setModal(true);
+        bookDetailsWindow.addCloseListener(e1 -> createLeftPanelForBooksMenu());
+        addWindow(bookDetailsWindow);
     }
 
     private void createLeftPanelForCategoriesOfBooksMenu() {
@@ -349,13 +458,6 @@ public class AdminUI extends BaseUI {
         listWithCategories.setWidth(100f, Unit.PERCENTAGE);
         listWithCategories.setHeight(100f, Unit.PERCENTAGE);
 
-        listWithCategories.addSelectionListener(event -> {
-            Set<String> selected = event.getAllSelectedItems();
-            //Notification.show(selected.size() + " categories of books selected.", Notification.Type.TRAY_NOTIFICATION);
-            if (selected.size() == 1) {
-                createRightTopPanelForCategoriesOfBookMenu(selected.iterator().next());
-            }
-        });
         listWithCategories.setItems(bookCategoryService.getAllStringCategories());
 
         VerticalLayout panelWithButtons = new VerticalLayout();
@@ -374,85 +476,139 @@ public class AdminUI extends BaseUI {
         leftPanel.setComponentAlignment(categoriesLabel, Alignment.TOP_LEFT);
         leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
 
+
+        leftPanel.addLayoutClickListener(event -> {
+            if (event.getMouseEventDetails().isDoubleClick()) {
+                Component clickedComponent = event.getClickedComponent();
+                if (ListSelect.class.equals(event.getClickedComponent().getClass()) && ((ListSelect)clickedComponent).getSelectedItems().size() == 1) {
+                    selectedCategoryDoubleClick(((ListSelect<String>)clickedComponent).getSelectedItems().iterator().next());
+                }
+            }
+        });
+
         addCreateAndShowAllItemsPanelOnGlobalPanel();
     }
 
-    private void createRightTopPanelForCategoriesOfBookMenu(String selectedCategory) {
-        ListSelect<String> booksForSelectedCategory = new ListSelect<>();
+    private void selectedCategoryDoubleClick(String selectedCategory) {
+        Window categoryDetailsWindow = new Window("Category details");
+
+        FormLayout categoryDetailsLayout = new FormLayout();
+
+        TextField categoryNameField = new TextField("Category name");
+        categoryNameField.setWidth(100f, Unit.PERCENTAGE);
+
+        ListSelect<Book> booksForSelectedCategory = new ListSelect<>();
         booksForSelectedCategory.setWidth(100f, Unit.PERCENTAGE);
 
-        Label usersLabel = new Label("Books");
+        Label booksLabel = new Label("Books");
         Set<Book> books = bookCategoryService.getBooksByCategory(selectedCategory);
-        booksForSelectedCategory.setItems(books.stream().map(Book::toString).collect(Collectors.toList()));
+        booksForSelectedCategory.setItems(new ArrayList<>(books));
 
-        rightTopPanelOnRightPanelComponents.removeAllComponents();
-        rightTopPanelOnRightPanelComponents.addComponents(usersLabel, booksForSelectedCategory);
-        rightTopPanelOnRightPanelComponents.setComponentAlignment(usersLabel, Alignment.TOP_CENTER);
-        rightTopPanelOnRightPanelComponents.setComponentAlignment(booksForSelectedCategory, Alignment.TOP_CENTER);
+        Button saveNewCategoryDetailsButton = new Button("Save");
+
+        saveNewCategoryDetailsButton.addClickListener(event -> {
+
+            AtomicBoolean resultOfOperation = new AtomicBoolean(false);
+
+            if (!StringUtils.isEmpty(categoryNameField.getValue())) {
+
+                Window confirmDialogWindow = new YesNoDialog("Confirmation",
+                        "Do you really want to change category details: " +
+                                selectedCategory,
+                        resultIsYes -> {
+                            if (resultIsYes) {
+                                Set<Book> booksForSelectedCategorySet = booksForSelectedCategory.getSelectedItems();
+                                resultOfOperation.set(
+                                        bookCategoryService.changeCategoryDetails(selectedCategory, categoryNameField.getValue(), booksForSelectedCategorySet));
+                            }
+                        });
+
+                confirmDialogWindow.center();
+                addWindow(confirmDialogWindow);
+            }
+
+            Notification.show("Changes for category \"" + selectedCategory +
+                            ((resultOfOperation.get()) ? "\" were saved." : " weren't saved."),
+                    Notification.Type.TRAY_NOTIFICATION);
+        });
+
+        categoryDetailsLayout.addComponents(categoryNameField, booksLabel, booksForSelectedCategory, saveNewCategoryDetailsButton);
+        categoryDetailsLayout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+        categoryDetailsWindow.setContent(categoryDetailsLayout);
+        categoryDetailsWindow.center();
+        categoryDetailsWindow.setModal(true);
+        categoryDetailsWindow.addCloseListener(e1 -> createLeftPanelForCategoriesOfBooksMenu());
+        addWindow(categoryDetailsWindow);
     }
 
     private void createUserButtonClick(Button.ClickEvent e) {
-        Window window = new Window("Create user");
+        Window createUserWindow = new Window("Create user");
 
         FormLayout createUserLayout = new FormLayout();
         HorizontalSplitPanel createUserSplitLayout = new HorizontalSplitPanel();
         createUserSplitLayout.setHeight(100f, Unit.PERCENTAGE);
         createUserSplitLayout.setWidth(100f, Unit.PERCENTAGE);
 
-        VerticalLayout leftPanel = new VerticalLayout();
-        leftPanel.setHeight(100f, Unit.PERCENTAGE);
-        leftPanel.setWidth(100f, Unit.PERCENTAGE);
+        VerticalLayout leftPanelCreateUser = new VerticalLayout();
+        leftPanelCreateUser.setHeight(100f, Unit.PERCENTAGE);
+        leftPanelCreateUser.setWidth(100f, Unit.PERCENTAGE);
+
+        VerticalLayout rightPanelCreateUser = new VerticalLayout();
+        rightPanelCreateUser.setHeight(100f, Unit.PERCENTAGE);
+        rightPanelCreateUser.setWidth(100f, Unit.PERCENTAGE);
+
+        ListSelect<String> listWithRoles = new ListSelect<>();
+
+        listWithRoles.setWidth(100f, Unit.PERCENTAGE);
+        listWithRoles.setHeight(100f, Unit.PERCENTAGE);
 
         Button createNewUserButton = new Button("Create");
         createNewUserButton.addClickListener((event) -> {
-            VerticalLayout rightPanel = (VerticalLayout) createUserSplitLayout.getSecondComponent();
-            ListSelect<String> listWithRolesOfUsers = (ListSelect<String>) rightPanel.getComponent(1);
-            Set<String> selectedItems = listWithRolesOfUsers.getSelectedItems();
+            Set<String> selectedRoles = listWithRoles.getSelectedItems();
+
+            if (selectedRoles.isEmpty()) {
+                Notification.show("Should be selected 1 role at least", Notification.Type.ERROR_MESSAGE);
+                return;
+            }
 
             boolean resultOfOperation = false;
+
             if (null != passwordField.getValue() &&
                     passwordField.getValue().equals(confirmPasswordField.getValue())) {
                 resultOfOperation = userService.save(usernameField.getValue(),
-                        passwordField.getValue(), roleService.findByRoles(selectedItems));
+                        passwordField.getValue(), roleService.findByRoles(selectedRoles));
             }
 
             Notification.show("User \"" + usernameField.getValue() + "\" with roles \"" +
-                            StringUtils.collectionToDelimitedString(selectedItems, ", ") +
+                            StringUtils.collectionToDelimitedString(selectedRoles, ", ") +
                             ((resultOfOperation) ? "\" created." : " didn't created."),
                     Notification.Type.TRAY_NOTIFICATION);
         });
 
-        leftPanel.addComponent(new Label("User credentials"));
+        leftPanelCreateUser.addComponent(new Label("User credentials"));
 
         usernameField.setValue("");
         passwordField.setValue("");
         confirmPasswordField.setValue("");
 
-        leftPanel.addComponents(usernameField, passwordField, confirmPasswordField, createNewUserButton);
-        leftPanel.setHeight(100f, Unit.PERCENTAGE);
-
-        VerticalLayout rightPanel = new VerticalLayout();
-        rightPanel.setHeight(100f, Unit.PERCENTAGE);
-        rightPanel.setWidth(100f, Unit.PERCENTAGE);
-
-        ListSelect<String> listWithRoles = new ListSelect<>();
-        listWithRoles.setWidth(100f, Unit.PERCENTAGE);
-        listWithRoles.setHeight(100f, Unit.PERCENTAGE);
+        leftPanelCreateUser.addComponents(usernameField, passwordField, confirmPasswordField, createNewUserButton);
+        leftPanelCreateUser.setHeight(100f, Unit.PERCENTAGE);
 
         listWithRoles.setItems(roleService.getAllStringRoles());
 
-        rightPanel.addComponents(new Label("Choose roles"), listWithRoles);
-        rightPanel.setHeight(100f, Unit.PERCENTAGE);
+        rightPanelCreateUser.addComponents(new Label("Choose roles"), listWithRoles);
+        rightPanelCreateUser.setHeight(100f, Unit.PERCENTAGE);
 
-        createUserSplitLayout.addComponents(leftPanel, rightPanel);
+        createUserSplitLayout.addComponents(leftPanelCreateUser, rightPanelCreateUser);
 
         createUserLayout.addComponent(createUserSplitLayout);
 
-        window.setContent(createUserLayout);
-        window.center();
-        window.setModal(true);
-        window.addCloseListener(e1 -> createLeftPanelForUserMenu());
-        addWindow(window);
+        createUserWindow.setContent(createUserLayout);
+        createUserWindow.center();
+        createUserWindow.setModal(true);
+        createUserWindow.addCloseListener(e1 -> createLeftPanelForUserMenu());
+        addWindow(createUserWindow);
     }
 
     private void createUserRoleButtonClick(Button.ClickEvent e) {
@@ -541,97 +697,6 @@ public class AdminUI extends BaseUI {
         TextField numberOfCopiesTextField = new TextField("Number of copies");
         numberOfCopiesTextField.setWidth(100f, Unit.PERCENTAGE);
 
-        class ImageUploader extends CustomComponent implements Upload.Receiver, Upload.SucceededListener,
-                Upload.FailedListener, Upload.ProgressListener {
-
-            String filename;
-            ByteArrayOutputStream outputStreamForImage = new ByteArrayOutputStream(10240);
-            ProgressBar progressBar = new ProgressBar(0.0f);
-            Image coverImage = new Image("Cover");
-            final HashSet<String> imageMimeTypes = new HashSet<>(Arrays.asList("image/gif", "image/png", "image/jpeg", "image/bmp"));
-            Upload uploadComponent = new Upload("Upload cover", null);
-            Button resetImageButton = new Button("Reset", this::resetButtonClick);
-            boolean isErrorFlag = false;
-
-            public ImageUploader() {
-                uploadComponent.setReceiver(this);
-                uploadComponent.addFailedListener(this);
-                uploadComponent.addSucceededListener(this);
-                uploadComponent.addProgressListener(this);
-
-                Panel panel = new Panel();
-                VerticalLayout content = new VerticalLayout();
-                content.setSpacing(true);
-                panel.setContent(content);
-
-                content.addComponents(uploadComponent, resetImageButton, progressBar, coverImage);
-
-                progressBar.setVisible(false);
-                progressBar.setWidth(100f, Unit.PERCENTAGE);
-                coverImage.setVisible(false);
-
-                setCompositionRoot(panel);
-            }
-
-            public OutputStream receiveUpload(String filename,
-                                              String mimeType) {
-                if (imageMimeTypes.contains(mimeType)) {
-                    this.filename = filename;
-                    outputStreamForImage.reset();
-                    isErrorFlag = false;
-                    return outputStreamForImage;
-                } else {
-                    isErrorFlag = true;
-                    uploadComponent.interruptUpload();
-                }
-                return outputStreamForImage;
-            }
-
-            public void uploadSucceeded(Upload.SucceededEvent event) {
-                if (!isErrorFlag) {
-                    coverImage.setVisible(true);
-                    coverImage.setCaption("Uploaded cover: " + filename);
-
-                    StreamResource.StreamSource streamResource = (StreamResource.StreamSource)
-                            () -> new ByteArrayInputStream(outputStreamForImage.toByteArray());
-
-                    if (coverImage.getSource() == null) {
-                        coverImage.setSource(new StreamResource(streamResource, filename));
-                    } else {
-                        StreamResource resource = (StreamResource) coverImage.getSource();
-                        resource.setStreamSource(streamResource);
-                        resource.setFilename(filename);
-                    }
-
-                    coverImage.markAsDirty();
-                }
-            }
-
-            @Override
-            public void uploadFailed(Upload.FailedEvent event) {
-                Notification.show("Upload failed", Notification.Type.ERROR_MESSAGE);
-            }
-
-            @Override
-            public void updateProgress(long readBytes, long contentLength) {
-                if (!isErrorFlag) {
-                    progressBar.setVisible(true);
-                    if (contentLength == -1) {
-                        progressBar.setIndeterminate(true);
-                    } else {
-                        progressBar.setValue((float) readBytes / (float) contentLength);
-                    }
-                }
-            }
-
-            public void resetButtonClick(Button.ClickEvent event) {
-                progressBar.setVisible(false);
-                progressBar.setValue(0f);
-                coverImage.setVisible(false);
-                outputStreamForImage.reset();
-            }
-        }
-
         ImageUploader pictureOfBookCoverImageUploader = new ImageUploader();
         pictureOfBookCoverImageUploader.setWidth(100f, Unit.PERCENTAGE);
 
@@ -674,8 +739,8 @@ public class AdminUI extends BaseUI {
             bookParameters.put("price", priceTextField.getValue().isEmpty() ? BigDecimal.ZERO : conversionService.convert(priceTextField.getValue(), BigDecimal.class));
             bookParameters.put("numberOfCopies", numberOfCopiesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfCopiesTextField.getValue(), Integer.class));
 
-            if (pictureOfBookCoverImageUploader.outputStreamForImage.size() > 0) {
-                bookParameters.put("pictureOfBookCover", pictureOfBookCoverImageUploader.outputStreamForImage.toByteArray());
+            if (pictureOfBookCoverImageUploader.getOutputStreamForImage().size() > 0) {
+                bookParameters.put("pictureOfBookCover", pictureOfBookCoverImageUploader.getOutputStreamForImage().toByteArray());
             }
 
             createdBook = bookService.save(bookParameters);

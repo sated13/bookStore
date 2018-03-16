@@ -23,4 +23,6 @@ public interface BookCategoryService {
     List<String> getAllStringCategories();
 
     Set<Book> getBooksByCategory(String category);
+
+    boolean changeCategoryDetails(String category, String newCategoryName, Set<Book> books);
 }

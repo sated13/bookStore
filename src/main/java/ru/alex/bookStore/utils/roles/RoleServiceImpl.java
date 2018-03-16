@@ -10,12 +10,13 @@ import ru.alex.bookStore.repository.RoleRepository;
 import java.util.*;
 
 @Service
-public class RoleServiceImpl implements RoleService{
+public class RoleServiceImpl implements RoleService {
 
     @Autowired
     RoleRepository roleRepository;
 
-    RoleServiceImpl() {}
+    RoleServiceImpl() {
+    }
 
     public boolean save(String role) {
         UserRole userRole = new UserRole();
@@ -23,8 +24,7 @@ public class RoleServiceImpl implements RoleService{
         try {
             roleRepository.save(userRole);
             return true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             //ToDo: add logging
             return false;
         }
@@ -35,17 +35,17 @@ public class RoleServiceImpl implements RoleService{
         try {
             roleRepository.delete(userRole);
             return true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             //ToDo: add logging
             return false;
         }
-    }public boolean delete(UserRole role) {
+    }
+
+    public boolean delete(UserRole role) {
         try {
             roleRepository.delete(role);
             return true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             //ToDo: add logging
             return false;
         }
@@ -54,7 +54,7 @@ public class RoleServiceImpl implements RoleService{
     public int delete(Set<String> roles) {
         int result = 0;
 
-        for (String role: roles) {
+        for (String role : roles) {
             result += (delete(role)) ? 1 : 0;
         }
 
@@ -65,8 +65,7 @@ public class RoleServiceImpl implements RoleService{
         UserRole userRole = null;
         try {
             userRole = roleRepository.findByAuthority(role);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             //ToDo: add logging
         }
         return userRole;
@@ -76,7 +75,7 @@ public class RoleServiceImpl implements RoleService{
     public Set<UserRole> findByRoles(Set<String> roles) {
         Set<UserRole> foundedRoles = new HashSet<>();
         UserRole tempRole;
-        for(String role: roles) {
+        for (String role : roles) {
             tempRole = findByRole(role);
             if (null != tempRole) foundedRoles.add(tempRole);
         }
@@ -91,7 +90,7 @@ public class RoleServiceImpl implements RoleService{
     public List<String> getAllStringRoles() {
         List<UserRole> userRoles = getAllRoles();
         List<String> allStringUserRoles = new ArrayList<>();
-        for(UserRole role: userRoles) {
+        for (UserRole role : userRoles) {
             allStringUserRoles.add(role.getAuthority());
         }
 
@@ -101,5 +100,23 @@ public class RoleServiceImpl implements RoleService{
     @Override
     public Set<User> getUsersByRole(String role) {
         return Collections.unmodifiableSet(roleRepository.findByAuthority(role).getUsers());
+    }
+
+    @Override
+    public boolean changeRoleDetails(String role, String roleName, Set<User> users) {
+        try {
+            UserRole roleObject = findByRole(role);
+
+            if (roleObject != null) {
+                roleObject.setAuthority(roleName);
+                roleObject.setUsers(users);
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            //ToDo: add logging
+            return false;
+        }
     }
 }

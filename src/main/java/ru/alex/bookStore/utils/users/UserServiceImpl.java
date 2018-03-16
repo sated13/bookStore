@@ -35,8 +35,7 @@ public class UserServiceImpl implements UserService {
         try {
             userRepository.save(user);
             return true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             //ToDo: add logging
             return false;
         }
@@ -47,8 +46,7 @@ public class UserServiceImpl implements UserService {
         try {
             userRepository.delete(user);
             return true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             //ToDo: add logging
             return false;
         }
@@ -58,8 +56,7 @@ public class UserServiceImpl implements UserService {
         try {
             userRepository.delete(user);
             return true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             //ToDo: add logging
             return false;
         }
@@ -68,7 +65,7 @@ public class UserServiceImpl implements UserService {
     public int delete(Set<String> users) {
         int result = 0;
 
-        for (String user: users) {
+        for (String user : users) {
             result += (delete(user)) ? 1 : 0;
         }
 
@@ -79,21 +76,40 @@ public class UserServiceImpl implements UserService {
         User user = null;
         try {
             user = userRepository.findByUsername(username);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             //ToDo: add logging
         }
         return user;
+    }
+
+    @Override
+    public Set<User> findByUserNames(Set<String> userNames) {
+        Set<User> users = new HashSet<>();
+
+        try {
+            User tempUser;
+            for (String username: userNames) {
+                tempUser = findByUsername(username);
+                if (null != tempUser) {
+                    users.add(tempUser);
+                }
+            }
+        } catch (Exception e) {
+            //ToDo: add logging
+            return null;
+        }
+
+        return users;
     }
 
     public List<User> getAllUsers() {
         return Collections.unmodifiableList(userRepository.findAll(new Sort(Sort.Direction.ASC, "username")));
     }
 
-    public List<String> getAllUsernames() {
+    public List<String> getAllUserNames() {
         List<User> allUsers = getAllUsers();
         List<String> allUsernames = new ArrayList<>();
-        for(User user: allUsers) {
+        for (User user : allUsers) {
             allUsernames.add(user.getUsername());
         }
         return allUsernames;
@@ -105,9 +121,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean isAdmin(String username) {
+    public boolean isAdmin(String userName) {
         GrantedAuthority adminRole = roleRepository.findByAuthority("admin");
-        User user = findByUsername(username);
+        User user = findByUsername(userName);
         return user.getRoles().contains(adminRole);
     }
 
@@ -115,5 +131,20 @@ public class UserServiceImpl implements UserService {
     public boolean isAdmin(User user) {
         GrantedAuthority adminRole = roleRepository.findByAuthority("admin");
         return user.getRoles().contains(adminRole);
+    }
+
+    @Override
+    public boolean changeUserDetails(String user, String newUserName, String password, Set<UserRole> roles) {
+        try {
+            User userObject = findByUsername(user);
+            userObject.setUsername(newUserName);
+            userObject.setPassword(passwordEncoder.encode(password));
+            userObject.setRoles(roles);
+
+            return true;
+        } catch (Exception e) {
+            //ToDo: add logging
+            return false;
+        }
     }
 }

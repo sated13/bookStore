@@ -28,7 +28,7 @@ public class Book implements Serializable {
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> authors;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "books_categories",
             joinColumns = @JoinColumn(name = "book_id", referencedColumnName = "book_id"),
             inverseJoinColumns = @JoinColumn(name = "book_category_id", referencedColumnName = "book_category_id"))
@@ -39,7 +39,7 @@ public class Book implements Serializable {
     private BigDecimal price = new BigDecimal(0);
     private Integer numberOfCopies = 0;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)
     private Cover pictureOfBookCover;
 
     public Book() {

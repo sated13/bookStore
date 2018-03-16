@@ -23,4 +23,6 @@ public interface RoleService {
     List<String> getAllStringRoles();
 
     Set<User> getUsersByRole(String role);
+
+    boolean changeRoleDetails(String role, String roleName, Set<User> users);
 }

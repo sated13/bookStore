@@ -25,4 +25,6 @@ public interface BookService {
     Set<BookCategory> getBookCategories(Book book);
 
     Cover getBookCover(Book book);
+
+    boolean changeBookDetails(Book book, Map<String, Object> bookParameters);
 }

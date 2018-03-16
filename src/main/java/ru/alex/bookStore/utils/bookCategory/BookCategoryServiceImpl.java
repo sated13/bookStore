@@ -107,4 +107,22 @@ public class BookCategoryServiceImpl implements BookCategoryService{
         Hibernate.initialize(bookCategory.getBooks());
         return Collections.unmodifiableSet(bookCategory.getBooks());
     }
+
+    @Override
+    public boolean changeCategoryDetails(String category, String newCategoryName, Set<Book> books) {
+        try {
+            BookCategory bookCategory = findByCategory(category);
+
+            if (bookCategory != null) {
+                bookCategory.setCategory(newCategoryName);
+                bookCategory.setBooks(books);
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            //ToDo: add logging
+            return false;
+        }
+    }
 }
