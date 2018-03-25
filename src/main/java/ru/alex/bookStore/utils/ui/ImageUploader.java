@@ -5,6 +5,7 @@ import com.vaadin.ui.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -17,8 +18,9 @@ public class ImageUploader extends CustomComponent implements Upload.Receiver, U
     ProgressBar progressBar = new ProgressBar(0.0f);
     Image coverImage = new Image("Cover");
     final HashSet<String> imageMimeTypes = new HashSet<>(Arrays.asList("image/gif", "image/png", "image/jpeg", "image/bmp"));
-    Upload uploadComponent = new Upload("Upload cover", null);
+    Upload uploadComponent = new Upload("", null);
     Button resetImageButton = new Button("Reset", this::resetButtonClick);
+    Label uploadCoverLabel = new Label("Upload cover");
     boolean isErrorFlag = false;
 
     public ImageUploader() {
@@ -29,10 +31,16 @@ public class ImageUploader extends CustomComponent implements Upload.Receiver, U
 
         Panel panel = new Panel();
         VerticalLayout content = new VerticalLayout();
+        HorizontalLayout horizontalLayoutForButtons = new HorizontalLayout();
+
         content.setSpacing(true);
         panel.setContent(content);
 
-        content.addComponents(uploadComponent, resetImageButton, progressBar, coverImage);
+        horizontalLayoutForButtons.addComponents(uploadComponent, resetImageButton);
+        horizontalLayoutForButtons.setComponentAlignment(resetImageButton, Alignment.BOTTOM_CENTER);
+
+        content.addComponents(uploadCoverLabel, horizontalLayoutForButtons, progressBar, coverImage);
+        content.setDefaultComponentAlignment(Alignment.TOP_LEFT);
 
         progressBar.setVisible(false);
         progressBar.setWidth(100f, Unit.PERCENTAGE);
@@ -57,21 +65,7 @@ public class ImageUploader extends CustomComponent implements Upload.Receiver, U
 
     public void uploadSucceeded(Upload.SucceededEvent event) {
         if (!isErrorFlag) {
-            coverImage.setVisible(true);
-            coverImage.setCaption("Uploaded cover: " + filename);
-
-            StreamResource.StreamSource streamResource = (StreamResource.StreamSource)
-                    () -> new ByteArrayInputStream(outputStreamForImage.toByteArray());
-
-            if (coverImage.getSource() == null) {
-                coverImage.setSource(new StreamResource(streamResource, filename));
-            } else {
-                StreamResource resource = (StreamResource) coverImage.getSource();
-                resource.setStreamSource(streamResource);
-                resource.setFilename(filename);
-            }
-
-            coverImage.markAsDirty();
+            showImage();
         }
     }
 
@@ -92,14 +86,46 @@ public class ImageUploader extends CustomComponent implements Upload.Receiver, U
         }
     }
 
-    public void resetButtonClick(Button.ClickEvent event) {
-        progressBar.setVisible(false);
-        progressBar.setValue(0f);
+    private void resetButtonClick(Button.ClickEvent event) {
+        resetProgressbar();
         coverImage.setVisible(false);
         outputStreamForImage.reset();
     }
 
     public ByteArrayOutputStream getOutputStreamForImage() {
         return outputStreamForImage;
+    }
+
+    public void setOutputStreamForImage(byte[] bytes) {
+        try {
+            outputStreamForImage.reset();
+            outputStreamForImage.write(bytes);
+        } catch (IOException e) {
+            //ToDo" add logging
+            e.printStackTrace();
+        }
+    }
+
+    public void resetProgressbar() {
+        progressBar.setVisible(false);
+        progressBar.setValue(0f);
+    }
+
+    public void showImage() {
+        coverImage.setVisible(true);
+        coverImage.setCaption("Uploaded cover: " + filename);
+
+        StreamResource.StreamSource streamResource = (StreamResource.StreamSource)
+                () -> new ByteArrayInputStream(outputStreamForImage.toByteArray());
+
+        if (coverImage.getSource() == null) {
+            coverImage.setSource(new StreamResource(streamResource, filename));
+        } else {
+            StreamResource resource = (StreamResource) coverImage.getSource();
+            resource.setStreamSource(streamResource);
+            resource.setFilename(filename);
+        }
+
+        coverImage.markAsDirty();
     }
 }

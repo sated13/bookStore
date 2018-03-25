@@ -7,7 +7,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "user_roles")
-public class UserRole implements GrantedAuthority{
+public class UserRole implements GrantedAuthority {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,9 +16,6 @@ public class UserRole implements GrantedAuthority{
 
     @Column(nullable = false, length = 45)
     String authority;
-
-    @ManyToMany(fetch = FetchType.EAGER, mappedBy = "roles")
-    Set<User> users;
 
     public UserRole() {
     }
@@ -31,24 +28,13 @@ public class UserRole implements GrantedAuthority{
         this.authority = role;
     }
 
-    public Set<User> getUsers() {
-        return users;
-    }
-
-    public void setUsers(Set<User> users) {
-        this.users = users;
-    }
-
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
+        if (null == obj) return false;
+        if (this == obj) return true;
 
-        if (obj instanceof UserRole) {
-            return authority.equals(((UserRole) obj).authority);
-        }
-
-        return false;
+        if (!(obj instanceof UserRole)) return false;
+        UserRole role = (UserRole) obj;
+        return userRoleId.equals(role.userRoleId);
     }
 
     public int hashCode() {

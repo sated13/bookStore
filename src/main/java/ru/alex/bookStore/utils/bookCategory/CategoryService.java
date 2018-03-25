@@ -1,18 +1,19 @@
 package ru.alex.bookStore.utils.bookCategory;
 
-import ru.alex.bookStore.entities.Book;
 import ru.alex.bookStore.entities.BookCategory;
 
 import java.util.List;
 import java.util.Set;
 
-public interface BookCategoryService {
+public interface CategoryService {
 
     boolean save(String category);
 
     boolean delete(String category);
 
-    int delete(Set<String> users);
+    int delete(Set<String> categories);
+
+    long countCategories();
 
     BookCategory findByCategory(String category);
 
@@ -22,7 +23,7 @@ public interface BookCategoryService {
 
     List<String> getAllStringCategories();
 
-    Set<Book> getBooksByCategory(String category);
+    /*Set<Book> getBooksByCategory(String category);*/
 
-    boolean changeCategoryDetails(String category, String newCategoryName, Set<Book> books);
+    boolean changeCategoryDetails(BookCategory category, String newCategoryName/*, Set<Book> books*/);
 }

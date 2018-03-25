@@ -1,8 +1,12 @@
 package ru.alex.bookStore.ui;
 
 import com.vaadin.data.Result;
+import com.vaadin.data.ValidationResult;
+import com.vaadin.data.Validator;
+import com.vaadin.data.ValueContext;
+import com.vaadin.data.provider.DataProvider;
+import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.data.validator.*;
-import com.vaadin.server.StreamResource;
 import com.vaadin.server.UserError;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.ui.datefield.DateResolution;
@@ -14,30 +18,28 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import ru.alex.bookStore.entities.*;
-import ru.alex.bookStore.utils.ComponentValueValidation;
+import ru.alex.bookStore.repository.BookRepository;
+import ru.alex.bookStore.utils.ui.ComponentValueValidation;
 import ru.alex.bookStore.utils.book.BookService;
-import ru.alex.bookStore.utils.bookCategory.BookCategoryService;
+import ru.alex.bookStore.utils.bookCategory.CategoryService;
 import ru.alex.bookStore.utils.roles.RoleService;
 import ru.alex.bookStore.utils.ui.ImageUploader;
 import ru.alex.bookStore.utils.ui.YesNoDialog;
 import ru.alex.bookStore.utils.users.UserService;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @SpringUI(path = "/adminPanel")
 public class AdminUI extends BaseUI {
 
     @Autowired
-    BookCategoryService bookCategoryService;
+    CategoryService categoryService;
     @Autowired
     BookService bookService;
     @Autowired
@@ -52,8 +54,11 @@ public class AdminUI extends BaseUI {
     HorizontalSplitPanel createAndShowAllItemsPanel = new HorizontalSplitPanel();
     VerticalLayout leftPanel = new VerticalLayout();
     VerticalLayout rightPanel = new VerticalLayout();
-    //Panel rightTopPanelOnRightPanel = new Panel();
-    //FormLayout rightTopPanelOnRightPanelComponents = new FormLayout();
+
+    private final String usersCaption = "Users";
+    private final String rolesCaption = "Roles";
+    private final String booksCaption = "Books";
+    private final String categoriesCaption = "Categories";
 
     @Override
     public void init(VaadinRequest vaadinRequest) {
@@ -86,20 +91,58 @@ public class AdminUI extends BaseUI {
         menuBar.setWidth(100f, Unit.PERCENTAGE);
 
         MenuBar.MenuItem usersMenuItem = menuBar.addItem("Users",
-                (selectedMenuItem) -> createLeftPanelForUserMenu());
-        MenuBar.MenuItem rolesOfUsersMenuItem = menuBar.addItem("Roles of users",
-                (selectedMenuItem) -> createLeftPanelForRolesOfUsersMenu());
+                (selectedMenuItem) -> {
+                    createLeftPanelForUsersMenu();
+                    createRightPanelForUsersMenu();
+                });
+        MenuBar.MenuItem rolesMenuItem = menuBar.addItem("Roles",
+                (selectedMenuItem) -> {
+                    createLeftPanelForRolesMenu();
+                    createRightPanelForRolesMenu();
+                });
         MenuBar.MenuItem booksMenuItem = menuBar.addItem("Books",
-                (selectedMenuItem) -> createLeftPanelForBooksMenu());
-        MenuBar.MenuItem categoriesOfBooksMenuItem = menuBar.addItem("Categories of books",
-                (selectedMenuItem) -> createLeftPanelForCategoriesOfBooksMenu());
-
-        //rightTopPanelOnRightPanelComponents.setHeight("600px");
-        //rightTopPanelOnRightPanelComponents.setStyleName(ValoTheme.LAYOUT_WELL);
+                (selectedMenuItem) -> {
+                    createLeftPanelForBooksMenu();
+                    createRightPanelForBooksMenu();
+                });
+        MenuBar.MenuItem categoriesMenuItem = menuBar.addItem("Categories",
+                (selectedMenuItem) -> {
+                    createLeftPanelForCategoriesMenu();
+                    createRightPanelForCategoriesMenu();
+                });
 
         createAndShowAllItemsPanel.removeAllComponents();
         createAndShowAllItemsPanel.addComponent(leftPanel);
         createAndShowAllItemsPanel.addComponent(rightPanel);
+
+        leftPanel.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+        rightPanel.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+        leftPanel.addLayoutClickListener(event -> {
+            if (event.getMouseEventDetails().isDoubleClick()) {
+                Component clickedComponent = event.getClickedComponent();
+                if (ListSelect.class.equals(event.getClickedComponent().getClass()) && ((ListSelect) clickedComponent).getSelectedItems().size() == 1) {
+                    switch (clickedComponent.getCaption()) {
+                        case usersCaption: {
+                            selectedUserDoubleClick(((ListSelect<String>) clickedComponent).getSelectedItems().iterator().next());
+                            break;
+                        }
+                        case rolesCaption: {
+                            selectedRoleDoubleClick(((ListSelect<String>) clickedComponent).getSelectedItems().iterator().next());
+                            break;
+                        }
+                        case booksCaption: {
+                            selectedBookDoubleClick(((ListSelect<Book>) clickedComponent).getSelectedItems().iterator().next());
+                            break;
+                        }
+                        case categoriesCaption: {
+                            selectedCategoryDoubleClick(((ListSelect<String>) clickedComponent).getSelectedItems().iterator().next());
+                            break;
+                        }
+                    }
+                }
+            }
+        });
 
         window.setContent(globalPanel);
         window.setSizeFull();
@@ -111,9 +154,6 @@ public class AdminUI extends BaseUI {
     private void cleanLeftAndRightPanel() {
         leftPanel.removeAllComponents();
         rightPanel.removeAllComponents();
-
-        //rightTopPanelOnRightPanelComponents.removeAllComponents();
-        //rightPanel.addComponent(rightTopPanelOnRightPanelComponents);
     }
 
     private void logoutButtonClicked(Button.ClickEvent e) {
@@ -128,10 +168,8 @@ public class AdminUI extends BaseUI {
         }
     }
 
-    private void createLeftPanelForUserMenu() {
-        Label usersLabel = new Label("Users");
-
-        ListSelect<String> listWithUsers = new ListSelect<>();
+    private void createLeftPanelForUsersMenu() {
+        ListSelect<String> listWithUsers = new ListSelect<>(usersCaption);
         listWithUsers.setWidth(100f, Unit.PERCENTAGE);
         listWithUsers.setHeight(100f, Unit.PERCENTAGE);
 
@@ -149,100 +187,56 @@ public class AdminUI extends BaseUI {
         panelWithButtons.setComponentAlignment(deleteUserButton, Alignment.TOP_LEFT);
 
         cleanLeftAndRightPanel();
-        leftPanel.addComponents(usersLabel, listWithUsers, panelWithButtons);
-        leftPanel.setComponentAlignment(usersLabel, Alignment.TOP_LEFT);
-        leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
-
-        leftPanel.addLayoutClickListener(event -> {
-            if (event.getMouseEventDetails().isDoubleClick()) {
-                Component clickedComponent = event.getClickedComponent();
-                if (ListSelect.class.equals(event.getClickedComponent().getClass()) && ((ListSelect)clickedComponent).getSelectedItems().size() == 1) {
-                    selectedUserDoubleClick(((ListSelect<String>)clickedComponent).getSelectedItems().iterator().next());
-                }
-            }
-        });
+        leftPanel.addComponents(listWithUsers, panelWithButtons);
 
         addCreateAndShowAllItemsPanelOnGlobalPanel();
     }
 
+    private void createRightPanelForUsersMenu() {
+        Label usersCountLabel = new Label("Total count of users: " + userService.countUsers());
+
+        rightPanel.addComponents(usersCountLabel);
+    }
+
     private void selectedUserDoubleClick(String selectedUser) {
+        securityService.getAllSessions();
         Window userDetailsWindow = new Window("User details");
 
-        FormLayout userDetailsLayout = new FormLayout();
-
-        VerticalLayout userDetailsPanel = new VerticalLayout();
-        userDetailsPanel.setHeight(100f, Unit.PERCENTAGE);
-        userDetailsPanel.setWidth(100f, Unit.PERCENTAGE);
-
-        ListSelect<String> listWithRoles = new ListSelect<>();
-
-        Button saveUserDetailsButton = new Button("Save");
-        saveUserDetailsButton.addClickListener((event) -> {
-
-            Set<String> selectedRoles = listWithRoles.getSelectedItems();
-
-            if (selectedRoles.isEmpty()) {
-                Notification.show("Should be selected 1 role at least", Notification.Type.ERROR_MESSAGE);
-                return;
-            }
-
-            AtomicBoolean resultOfOperation = new AtomicBoolean(false);
-
-            if (null != passwordField.getValue() &&
-                    passwordField.getValue().equals(confirmPasswordField.getValue())) {
-
-                Window confirmDialogWindow = new YesNoDialog("Confirmation",
-                        "Do you really want to change user details: " +
-                                StringUtils.collectionToDelimitedString(selectedRoles, ", "),
-                        resultIsYes -> {
-                            if (resultIsYes) {
-                                resultOfOperation.set(userService.changeUserDetails(selectedUser, usernameField.getValue(),
-                                        passwordField.getValue(), roleService.findByRoles(selectedRoles)));
-                            }
-                        });
-
-                confirmDialogWindow.center();
-                addWindow(confirmDialogWindow);
-            }
-
-            Notification.show("Changes for user \"" + usernameField.getValue() +
-                            ((resultOfOperation.get()) ? "\" were saved." : " weren't saved."),
-                    Notification.Type.TRAY_NOTIFICATION);
-        });
-
-        userDetailsPanel.addComponent(new Label("User credentials"));
-
-        usernameField.setValue("");
-        passwordField.setValue("");
-        confirmPasswordField.setValue("");
-
-        userDetailsPanel.addComponents(usernameField, passwordField, confirmPasswordField, saveUserDetailsButton);
-        userDetailsPanel.setHeight(100f, Unit.PERCENTAGE);
-
-        listWithRoles.setWidth(100f, Unit.PERCENTAGE);
-        listWithRoles.setHeight(100f, Unit.PERCENTAGE);
-
-        listWithRoles.setItems(roleService.getAllStringRoles());
-
         User user = userService.findByUsername(selectedUser);
-        for (UserRole role: user.getRoles()) {
-            listWithRoles.select(role.getAuthority());
-        }
 
-        userDetailsLayout.addComponents(userDetailsPanel, new Label("Roles"), listWithRoles);
-        userDetailsLayout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+        FormLayout userDetailsLayout = createLayoutForUserParameters(user, "Save",
+                (user1, username, password, roles) -> {
+
+                    Window confirmDialogWindow = new YesNoDialog("Confirmation",
+                            "Do you really want to change details for user \"" + user1.getUsername() + "\" with roles \"" +
+                                    StringUtils.collectionToDelimitedString(roles, ", ") + "\" ?",
+                            resultIsYes -> {
+                                if (resultIsYes) {
+                                    boolean resultOfOperation = userService.changeUserDetails(user1.getUsername(), usernameField.getValue(),
+                                            passwordField.getValue(), roles);
+
+                                    Notification.show("Changes for user \"" + usernameField.getValue() +
+                                                    ((resultOfOperation) ? "\" were saved." : " weren't saved."),
+                                            Notification.Type.TRAY_NOTIFICATION);
+                                }
+                            });
+
+                    confirmDialogWindow.center();
+                    addWindow(confirmDialogWindow);
+                });
 
         userDetailsWindow.setContent(userDetailsLayout);
         userDetailsWindow.center();
         userDetailsWindow.setModal(true);
-        userDetailsWindow.addCloseListener(e1 -> createLeftPanelForUserMenu());
+        userDetailsWindow.addCloseListener(e1 -> {
+            createLeftPanelForUsersMenu();
+            createRightPanelForUsersMenu();
+        });
         addWindow(userDetailsWindow);
     }
 
-    private void createLeftPanelForRolesOfUsersMenu() {
-        Label rolesLabel = new Label("Roles");
-
-        ListSelect<String> listWithRoles = new ListSelect<>();
+    private void createLeftPanelForRolesMenu() {
+        ListSelect<String> listWithRoles = new ListSelect<>(rolesCaption);
         listWithRoles.setWidth(100f, Unit.PERCENTAGE);
         listWithRoles.setHeight(100f, Unit.PERCENTAGE);
 
@@ -251,8 +245,8 @@ public class AdminUI extends BaseUI {
         VerticalLayout panelWithButtons = new VerticalLayout();
         panelWithButtons.setWidth(100f, Unit.PERCENTAGE);
 
-        Button newUserRoleButton = new Button("Create user role", this::createUserRoleButtonClick);
-        Button deleteUserRoleButton = new Button("Delete user role", this::deleteUserRoleButtonClick);
+        Button newUserRoleButton = new Button("Create user role", this::createRoleButtonClick);
+        Button deleteUserRoleButton = new Button("Delete user role", this::deleteRoleButtonClick);
 
         panelWithButtons.addComponents(newUserRoleButton, deleteUserRoleButton);
 
@@ -260,87 +254,72 @@ public class AdminUI extends BaseUI {
         panelWithButtons.setComponentAlignment(deleteUserRoleButton, Alignment.TOP_LEFT);
 
         cleanLeftAndRightPanel();
-        leftPanel.addComponents(rolesLabel, listWithRoles, panelWithButtons);
-        leftPanel.setComponentAlignment(rolesLabel, Alignment.TOP_LEFT);
-        leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
-
-        leftPanel.addLayoutClickListener(event -> {
-            if (event.getMouseEventDetails().isDoubleClick()) {
-                Component clickedComponent = event.getClickedComponent();
-                if (ListSelect.class.equals(event.getClickedComponent().getClass()) && ((ListSelect)clickedComponent).getSelectedItems().size() == 1) {
-                    selectedRoleDoubleClick(((ListSelect<String>)clickedComponent).getSelectedItems().iterator().next());
-                }
-            }
-        });
+        leftPanel.addComponents(listWithRoles, panelWithButtons);
 
         addCreateAndShowAllItemsPanelOnGlobalPanel();
+    }
+
+    private void createRightPanelForRolesMenu() {
+        Label rolesCountLabel = new Label("Total count of roles: " + roleService.countRoles());
+
+        rightPanel.addComponents(rolesCountLabel);
+
+        Map<UserRole, Integer> setOfUsersByRoles = userService.getCountOfUsersByRoles();
+
+        for (Map.Entry<UserRole, Integer> mapEntry : setOfUsersByRoles.entrySet()) {
+            rightPanel.addComponent(new Label("Count of users with \"" + mapEntry.getKey() +
+                    "\" role: " + mapEntry.getValue()));
+        }
     }
 
     private void selectedRoleDoubleClick(String selectedRole) {
         Window roleDetailsWindow = new Window("Role details");
 
-        FormLayout roleDetailsLayout = new FormLayout();
+        UserRole role = roleService.findByRole(selectedRole);
 
-        TextField roleNameTextField = new TextField("Role name");
+        FormLayout roleDetailsLayout = createLayoutForRoleParameters(role, "Save",
+                (role1, newRoleName, users) -> {
 
-        ListSelect<String> usersForSelectedRole = new ListSelect<>();
-        usersForSelectedRole.setWidth(100f, Unit.PERCENTAGE);
+                    Window confirmDialogWindow = new YesNoDialog("Confirmation",
+                            "Do you really want to change details for role \"" +
+                                    selectedRole + "\" ?",
+                            resultIsYes -> {
+                                boolean resultOfOperation;
 
-        Label usersLabel = new Label("Users");
-        Set<User> users = roleService.getUsersByRole(selectedRole);
-        usersForSelectedRole.setItems(users.stream().map(User::getUsername).collect(Collectors.toList()));
+                                if (resultIsYes) {
+                                    resultOfOperation = roleService.changeRoleDetails(role1, newRoleName);
 
-        Button saveRoleDetailsButton = new Button("Save");
+                                    int countOfChangedUsers = 0;
+                                    if (resultOfOperation) {
+                                        countOfChangedUsers = userService.setRoleOnUsers(role1, users);
+                                    }
 
-        saveRoleDetailsButton.addClickListener(event -> {
-            AtomicBoolean resultOfOperation = new AtomicBoolean(false);
+                                    Notification.show("Changes for role \"" + selectedRole +
+                                                    ((resultOfOperation) ? "\" were saved. " + "Role deleted from " +
+                                                            countOfChangedUsers + " users." : " weren't saved."),
+                                            Notification.Type.TRAY_NOTIFICATION);
+                                }
+                            });
 
-            if (!StringUtils.isEmpty(roleNameTextField.getValue())) {
-
-                Window confirmDialogWindow = new YesNoDialog("Confirmation",
-                        "Do you really want to change role details: " +
-                                selectedRole,
-                        resultIsYes -> {
-                            if (resultIsYes) {
-                                Set<User> usersWithRole = userService.findByUserNames(usersForSelectedRole.getSelectedItems());
-                                resultOfOperation.set(
-                                        roleService.changeRoleDetails(selectedRole, roleNameTextField.getValue(), usersWithRole));
-                            }
-                        });
-
-                confirmDialogWindow.center();
-                addWindow(confirmDialogWindow);
-            }
-
-            Notification.show("Changes for role \"" + selectedRole +
-                            ((resultOfOperation.get()) ? "\" were saved." : " weren't saved."),
-                    Notification.Type.TRAY_NOTIFICATION);
-        });
-
-        roleDetailsLayout.addComponents(roleNameTextField, usersLabel, usersForSelectedRole, saveRoleDetailsButton);
-        roleDetailsLayout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+                    confirmDialogWindow.center();
+                    addWindow(confirmDialogWindow);
+                });
 
         roleDetailsWindow.setContent(roleDetailsLayout);
         roleDetailsWindow.center();
         roleDetailsWindow.setModal(true);
-        roleDetailsWindow.addCloseListener(e1 -> createLeftPanelForRolesOfUsersMenu());
+        roleDetailsWindow.addCloseListener(e1 -> {
+            createLeftPanelForRolesMenu();
+            createRightPanelForRolesMenu();
+        });
         addWindow(roleDetailsWindow);
     }
 
     private void createLeftPanelForBooksMenu() {
-        Label booksLabel = new Label("Books");
-
-        ListSelect<Book> listWithBooks = new ListSelect<>();
+        ListSelect<Book> listWithBooks = new ListSelect<>(booksCaption);
         listWithBooks.setWidth(100f, Unit.PERCENTAGE);
         listWithBooks.setHeight(100f, Unit.PERCENTAGE);
 
-        listWithBooks.addSelectionListener(event -> {
-            Set<Book> selected = event.getAllSelectedItems();
-            //Notification.show(selected.size() + " books selected.", Notification.Type.TRAY_NOTIFICATION);
-            if (selected.size() == 1) {
-                selectedBookDoubleClick(selected.iterator().next());
-            }
-        });
         listWithBooks.setItems(bookService.getAllBooks());
 
         VerticalLayout panelWithButtons = new VerticalLayout();
@@ -355,116 +334,62 @@ public class AdminUI extends BaseUI {
         panelWithButtons.setComponentAlignment(deleteBookButton, Alignment.TOP_LEFT);
 
         cleanLeftAndRightPanel();
-        leftPanel.addComponents(booksLabel, listWithBooks, panelWithButtons);
-        leftPanel.setComponentAlignment(booksLabel, Alignment.TOP_LEFT);
-        leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
-
-        leftPanel.addLayoutClickListener(event -> {
-            if (event.getMouseEventDetails().isDoubleClick()) {
-                Component clickedComponent = event.getClickedComponent();
-                if (ListSelect.class.equals(event.getClickedComponent().getClass())) {
-
-                }
-            }
-        });
+        leftPanel.addComponents(listWithBooks, panelWithButtons);
 
         addCreateAndShowAllItemsPanelOnGlobalPanel();
     }
 
-    private void selectedBookDoubleClick(Book selectedBook) {
+    private void createRightPanelForBooksMenu() {
+        Label booksCountLabel = new Label("Total count of books: " + bookService.countBooks());
+
+        rightPanel.addComponents(booksCountLabel);
+    }
+
+    private void selectedBookDoubleClick(@NotNull Book selectedBook) {
         Window bookDetailsWindow = new Window("Book details");
 
-        FormLayout bookDetailsLayout = new FormLayout();
+        FormLayout bookDetailsLayout = createLayoutForBookParameters(selectedBook, "Save",
+                (book, bookParameters) -> {
+                    Window confirmDialogWindow = new YesNoDialog("Confirmation",
+                            "Do you really want to change details for book \"" +
+                                    book + "\" ?",
+                            resultIsYes -> {
+                                if (resultIsYes) {
+                                    boolean resultOfOperation = bookService.changeBookDetails(book, bookParameters);
 
-        Label bookLabel = new Label("Book");
+                                    Notification.show("Changes for book \"" + book.getBookTitle() + " " +
+                                                    StringUtils.collectionToDelimitedString(book.getAuthors(), ", ") +
+                                                    ((resultOfOperation) ? "\" were saved." : " weren't saved."),
+                                            Notification.Type.TRAY_NOTIFICATION);
+                                }
+                            });
 
-        TextField bookTitleTextField = new TextField("Title");
-        bookTitleTextField.setWidth(100f, Unit.PERCENTAGE);
-        bookTitleTextField.setValue(selectedBook.getBookTitle());
-        //bookTitleTextField.setEnabled(false);
-
-        TextField authorsTextField = new TextField("Authors");
-        authorsTextField.setWidth(100f, Unit.PERCENTAGE);
-        authorsTextField.setValue(StringUtils.collectionToDelimitedString(selectedBook.getAuthors(), ", "));
-        //authorsTextField.setEnabled(false);
-
-        TextField numberOfPagesTextField = new TextField("Number of pages");
-        numberOfPagesTextField.setWidth(100f, Unit.PERCENTAGE);
-        numberOfPagesTextField.setValue((null == selectedBook.getNumberOfPages()) ? "0" : selectedBook.getNumberOfPages().toString());
-        //numberOfPagesTextField.setEnabled(false);
-
-        TextField yearTextField = new TextField("Year");
-        yearTextField.setWidth(100f, Unit.PERCENTAGE);
-        yearTextField.setValue((null == selectedBook.getYear()) ? "0" : selectedBook.getYear().toString());
-        //yearTextField.setEnabled(false);
-
-        TextField publishingHouseTextField = new TextField("Publishing house");
-        publishingHouseTextField.setWidth(100f, Unit.PERCENTAGE);
-        publishingHouseTextField.setValue((null == selectedBook.getPublishingHouse()) ? "" : selectedBook.getPublishingHouse());
-        //publishingHouseTextField.setEnabled(false);
-
-        TextField priceTextField = new TextField("Price");
-        priceTextField.setWidth(100f, Unit.PERCENTAGE);
-        priceTextField.setValue((null == selectedBook.getPrice()) ? "0" : selectedBook.getPrice().toString());
-        //priceTextField.setEnabled(false);
-
-        TextField numberOfCopiesTextField = new TextField("Number of copies");
-        numberOfCopiesTextField.setWidth(100f, Unit.PERCENTAGE);
-        numberOfCopiesTextField.setValue((null == selectedBook.getNumberOfCopies()) ? "0" : selectedBook.getNumberOfCopies().toString());
-        //numberOfCopiesTextField.setEnabled(false);
-
-        Image bookCover;
-
-        Cover cover = bookService.getBookCover(selectedBook);
-        bookCover = new Image(null, new StreamResource(() -> {
-            if (null != cover && cover.isPresented()) {
-                ByteArrayInputStream byteArrayInputStream =
-                        new ByteArrayInputStream(cover.getPictureOfBookCover());
-                return byteArrayInputStream;
-            }
-            return null;
-        }, "cover"));
-        bookCover.setWidth(100f, Unit.PERCENTAGE);
-
-        TextField textFieldWithCategories = new TextField("Categories");
-        textFieldWithCategories.setWidth(100f, Unit.PERCENTAGE);
-        textFieldWithCategories.setHeight(100f, Unit.PERCENTAGE);
-        //textFieldWithCategories.setEnabled(false);
-
-        textFieldWithCategories.setValue(StringUtils.collectionToDelimitedString(bookService.getBookCategories(selectedBook), ", "));
-
-        bookDetailsLayout.addComponents(bookLabel, bookTitleTextField, authorsTextField, numberOfPagesTextField,
-                yearTextField, publishingHouseTextField, priceTextField, numberOfCopiesTextField, textFieldWithCategories,
-                bookCover);
-        bookDetailsLayout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
-
-        /*VerticalLayout rightPanel = new VerticalLayout();
-        rightPanel.setHeight(100f, Unit.PERCENTAGE);
-        rightPanel.setWidth(100f, Unit.PERCENTAGE);*/
-
-        //bookDetailsLayout.addComponents(categoryNameField, booksLabel, booksForSelectedCategory, saveNewCategoryDetailsButton);
+                    confirmDialogWindow.center();
+                    addWindow(confirmDialogWindow);
+                });
 
         bookDetailsWindow.setContent(bookDetailsLayout);
         bookDetailsWindow.center();
         bookDetailsWindow.setModal(true);
-        bookDetailsWindow.addCloseListener(e1 -> createLeftPanelForBooksMenu());
+        bookDetailsWindow.addCloseListener(e1 -> {
+            createLeftPanelForBooksMenu();
+            createRightPanelForBooksMenu();
+        });
         addWindow(bookDetailsWindow);
     }
 
-    private void createLeftPanelForCategoriesOfBooksMenu() {
-        Label categoriesLabel = new Label("Categories");
-
-        ListSelect<String> listWithCategories = new ListSelect<>();
+    private void createLeftPanelForCategoriesMenu() {
+        ListSelect<String> listWithCategories = new ListSelect<>(categoriesCaption);
         listWithCategories.setWidth(100f, Unit.PERCENTAGE);
         listWithCategories.setHeight(100f, Unit.PERCENTAGE);
 
-        listWithCategories.setItems(bookCategoryService.getAllStringCategories());
+        listWithCategories.setItems(categoryService.getAllStringCategories());
 
         VerticalLayout panelWithButtons = new VerticalLayout();
         panelWithButtons.setWidth(100f, Unit.PERCENTAGE);
 
-        Button newBookCategoryButton = new Button("Create book category", this::createBookCategoryButtonClick);
-        Button deleteBookCategoryButton = new Button("Delete book category", this::deleteBookCategoryButtonClick);
+        Button newBookCategoryButton = new Button("Create book category", this::createCategoryButtonClick);
+        Button deleteBookCategoryButton = new Button("Delete book category", this::deleteCategoryButtonClick);
 
         panelWithButtons.addComponents(newBookCategoryButton, deleteBookCategoryButton);
 
@@ -472,348 +397,170 @@ public class AdminUI extends BaseUI {
         panelWithButtons.setComponentAlignment(deleteBookCategoryButton, Alignment.TOP_LEFT);
 
         cleanLeftAndRightPanel();
-        leftPanel.addComponents(categoriesLabel, listWithCategories, panelWithButtons);
-        leftPanel.setComponentAlignment(categoriesLabel, Alignment.TOP_LEFT);
-        leftPanel.setComponentAlignment(panelWithButtons, Alignment.TOP_CENTER);
-
-
-        leftPanel.addLayoutClickListener(event -> {
-            if (event.getMouseEventDetails().isDoubleClick()) {
-                Component clickedComponent = event.getClickedComponent();
-                if (ListSelect.class.equals(event.getClickedComponent().getClass()) && ((ListSelect)clickedComponent).getSelectedItems().size() == 1) {
-                    selectedCategoryDoubleClick(((ListSelect<String>)clickedComponent).getSelectedItems().iterator().next());
-                }
-            }
-        });
+        leftPanel.addComponents(listWithCategories, panelWithButtons);
 
         addCreateAndShowAllItemsPanelOnGlobalPanel();
+    }
+
+    private void createRightPanelForCategoriesMenu() {
+        Label categoriesCountLabel = new Label("Total count of categories: " + categoryService.countCategories());
+
+        rightPanel.addComponents(categoriesCountLabel);
+
+        Map<BookCategory, Integer> setOfBooksByCategories = bookService.getCountOfBooksByCategories();
+
+        for (Map.Entry<BookCategory, Integer> mapEntry : setOfBooksByCategories.entrySet()) {
+            rightPanel.addComponent(new Label("Count of books with \"" + mapEntry.getKey() +
+                    "\" category: " + mapEntry.getValue()));
+        }
     }
 
     private void selectedCategoryDoubleClick(String selectedCategory) {
         Window categoryDetailsWindow = new Window("Category details");
 
-        FormLayout categoryDetailsLayout = new FormLayout();
+        BookCategory category = categoryService.findByCategory(selectedCategory);
 
-        TextField categoryNameField = new TextField("Category name");
-        categoryNameField.setWidth(100f, Unit.PERCENTAGE);
+        FormLayout categoryDetailsLayout = createLayoutForCategoryParameters(category, "Save",
+                (category1, newCategoryName, books) -> {
 
-        ListSelect<Book> booksForSelectedCategory = new ListSelect<>();
-        booksForSelectedCategory.setWidth(100f, Unit.PERCENTAGE);
+                    Window confirmDialogWindow = new YesNoDialog("Confirmation",
+                            "Do you really want to change details for category \"" +
+                                    selectedCategory + "\" ?",
+                            resultIsYes -> {
+                                boolean resultOfOperation;
 
-        Label booksLabel = new Label("Books");
-        Set<Book> books = bookCategoryService.getBooksByCategory(selectedCategory);
-        booksForSelectedCategory.setItems(new ArrayList<>(books));
+                                if (resultIsYes) {
+                                    resultOfOperation = categoryService.changeCategoryDetails(category1, newCategoryName);
 
-        Button saveNewCategoryDetailsButton = new Button("Save");
+                                    int countOfChangedBooks = 0;
+                                    if (resultOfOperation) {
+                                        countOfChangedBooks = bookService.setCategoryOnBooks(category1, books);
+                                    }
 
-        saveNewCategoryDetailsButton.addClickListener(event -> {
+                                    Notification.show("Changes for category \"" + selectedCategory +
+                                                    ((resultOfOperation) ? "\" were saved. " + "Category deleted from " +
+                                                            countOfChangedBooks + " books." : " weren't saved."),
+                                            Notification.Type.TRAY_NOTIFICATION);
+                                }
+                            });
 
-            AtomicBoolean resultOfOperation = new AtomicBoolean(false);
-
-            if (!StringUtils.isEmpty(categoryNameField.getValue())) {
-
-                Window confirmDialogWindow = new YesNoDialog("Confirmation",
-                        "Do you really want to change category details: " +
-                                selectedCategory,
-                        resultIsYes -> {
-                            if (resultIsYes) {
-                                Set<Book> booksForSelectedCategorySet = booksForSelectedCategory.getSelectedItems();
-                                resultOfOperation.set(
-                                        bookCategoryService.changeCategoryDetails(selectedCategory, categoryNameField.getValue(), booksForSelectedCategorySet));
-                            }
-                        });
-
-                confirmDialogWindow.center();
-                addWindow(confirmDialogWindow);
-            }
-
-            Notification.show("Changes for category \"" + selectedCategory +
-                            ((resultOfOperation.get()) ? "\" were saved." : " weren't saved."),
-                    Notification.Type.TRAY_NOTIFICATION);
-        });
-
-        categoryDetailsLayout.addComponents(categoryNameField, booksLabel, booksForSelectedCategory, saveNewCategoryDetailsButton);
-        categoryDetailsLayout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+                    confirmDialogWindow.center();
+                    addWindow(confirmDialogWindow);
+                });
 
         categoryDetailsWindow.setContent(categoryDetailsLayout);
         categoryDetailsWindow.center();
         categoryDetailsWindow.setModal(true);
-        categoryDetailsWindow.addCloseListener(e1 -> createLeftPanelForCategoriesOfBooksMenu());
+        categoryDetailsWindow.addCloseListener(e1 -> {
+            createLeftPanelForCategoriesMenu();
+            createRightPanelForCategoriesMenu();
+        });
         addWindow(categoryDetailsWindow);
     }
 
     private void createUserButtonClick(Button.ClickEvent e) {
         Window createUserWindow = new Window("Create user");
 
-        FormLayout createUserLayout = new FormLayout();
-        HorizontalSplitPanel createUserSplitLayout = new HorizontalSplitPanel();
-        createUserSplitLayout.setHeight(100f, Unit.PERCENTAGE);
-        createUserSplitLayout.setWidth(100f, Unit.PERCENTAGE);
+        FormLayout createUserLayout = createLayoutForUserParameters(null, "Create",
+                (user, username, password, roles) -> {
+                    boolean resultOfOperation = userService.save(usernameField.getValue(),
+                            passwordField.getValue(), roles);
 
-        VerticalLayout leftPanelCreateUser = new VerticalLayout();
-        leftPanelCreateUser.setHeight(100f, Unit.PERCENTAGE);
-        leftPanelCreateUser.setWidth(100f, Unit.PERCENTAGE);
-
-        VerticalLayout rightPanelCreateUser = new VerticalLayout();
-        rightPanelCreateUser.setHeight(100f, Unit.PERCENTAGE);
-        rightPanelCreateUser.setWidth(100f, Unit.PERCENTAGE);
-
-        ListSelect<String> listWithRoles = new ListSelect<>();
-
-        listWithRoles.setWidth(100f, Unit.PERCENTAGE);
-        listWithRoles.setHeight(100f, Unit.PERCENTAGE);
-
-        Button createNewUserButton = new Button("Create");
-        createNewUserButton.addClickListener((event) -> {
-            Set<String> selectedRoles = listWithRoles.getSelectedItems();
-
-            if (selectedRoles.isEmpty()) {
-                Notification.show("Should be selected 1 role at least", Notification.Type.ERROR_MESSAGE);
-                return;
-            }
-
-            boolean resultOfOperation = false;
-
-            if (null != passwordField.getValue() &&
-                    passwordField.getValue().equals(confirmPasswordField.getValue())) {
-                resultOfOperation = userService.save(usernameField.getValue(),
-                        passwordField.getValue(), roleService.findByRoles(selectedRoles));
-            }
-
-            Notification.show("User \"" + usernameField.getValue() + "\" with roles \"" +
-                            StringUtils.collectionToDelimitedString(selectedRoles, ", ") +
-                            ((resultOfOperation) ? "\" created." : " didn't created."),
-                    Notification.Type.TRAY_NOTIFICATION);
-        });
-
-        leftPanelCreateUser.addComponent(new Label("User credentials"));
-
-        usernameField.setValue("");
-        passwordField.setValue("");
-        confirmPasswordField.setValue("");
-
-        leftPanelCreateUser.addComponents(usernameField, passwordField, confirmPasswordField, createNewUserButton);
-        leftPanelCreateUser.setHeight(100f, Unit.PERCENTAGE);
-
-        listWithRoles.setItems(roleService.getAllStringRoles());
-
-        rightPanelCreateUser.addComponents(new Label("Choose roles"), listWithRoles);
-        rightPanelCreateUser.setHeight(100f, Unit.PERCENTAGE);
-
-        createUserSplitLayout.addComponents(leftPanelCreateUser, rightPanelCreateUser);
-
-        createUserLayout.addComponent(createUserSplitLayout);
+                    Notification.show("User \"" + usernameField.getValue() + "\" with roles \"" +
+                                    StringUtils.collectionToDelimitedString(roles, ", ") +
+                                    ((resultOfOperation) ? "\" created." : " didn't created."),
+                            Notification.Type.TRAY_NOTIFICATION);
+                });
 
         createUserWindow.setContent(createUserLayout);
         createUserWindow.center();
         createUserWindow.setModal(true);
-        createUserWindow.addCloseListener(e1 -> createLeftPanelForUserMenu());
+        createUserWindow.addCloseListener(e1 -> {
+            createLeftPanelForUsersMenu();
+            createRightPanelForUsersMenu();
+        });
         addWindow(createUserWindow);
     }
 
-    private void createUserRoleButtonClick(Button.ClickEvent e) {
+    private void createRoleButtonClick(Button.ClickEvent e) {
         Window window = new Window("Create user role");
 
-        FormLayout createRoleLayout = new FormLayout();
+        FormLayout createRoleLayout = createLayoutForRoleParameters(null, "Create",
+                (role, newRoleName, users) -> {
+                    boolean resultOfOperation = roleService.save(newRoleName);
 
-        TextField roleField = new TextField("New role");
-        roleField.setWidth(100f, Unit.PERCENTAGE);
+                    int countOfChangedUsers = 0;
+                    if (resultOfOperation) {
+                        UserRole createdRole = roleService.findByRole(newRoleName);
+                        countOfChangedUsers = userService.addRoleToUsers(createdRole, users);
+                    }
 
-        Button createNewUserRoleButton = new Button("Create");
-        createNewUserRoleButton.addClickListener((event) -> {
-
-            boolean resultOfOperation;
-
-            resultOfOperation = roleService.save(roleField.getValue());
-
-            Notification.show("Role \"" + roleField.getValue() +
-                            ((resultOfOperation) ? "\" created." : " didn't created."),
-                    Notification.Type.TRAY_NOTIFICATION);
-        });
-        createRoleLayout.addComponents(roleField, createNewUserRoleButton);
-        createRoleLayout.setComponentAlignment(createNewUserRoleButton, Alignment.TOP_LEFT);
+                    Notification.show("Role \"" + newRoleName +
+                                    ((resultOfOperation) ? "\" created." : " didn't created. " + "Role applied to " +
+                                            countOfChangedUsers + " users."),
+                            Notification.Type.TRAY_NOTIFICATION);
+                });
 
         window.setContent(createRoleLayout);
         window.center();
         window.setModal(true);
-        window.addCloseListener(e1 -> createLeftPanelForRolesOfUsersMenu());
+        window.addCloseListener(e1 -> {
+            createLeftPanelForRolesMenu();
+            createRightPanelForRolesMenu();
+        });
         addWindow(window);
     }
 
     private void createBookButtonClick(Button.ClickEvent e) {
         Window window = new Window("Create book");
 
-        FormLayout createBookLayout = new FormLayout();
-        HorizontalSplitPanel createBookSplitLayout = new HorizontalSplitPanel();
-        createBookSplitLayout.setHeight(100f, Unit.PERCENTAGE);
-        createBookSplitLayout.setWidth(100f, Unit.PERCENTAGE);
+        FormLayout createBookLayout = createLayoutForBookParameters(null, "Create",
+                (book, bookParameters) -> {
+                    Boolean resultOfOperation = bookService.save(bookParameters);
+                    String bookTitle = (String) bookParameters.get("bookTitle");
+                    String authors = StringUtils.collectionToDelimitedString((Set<String>) bookParameters.get("authors"), ", ");
 
-        VerticalLayout leftPanel = new VerticalLayout();
-        leftPanel.setHeight(100f, Unit.PERCENTAGE);
-        leftPanel.setWidth(100f, Unit.PERCENTAGE);
-
-        VerticalLayout rightPanelCreateBook = new VerticalLayout();
-        rightPanelCreateBook.setHeight(100f, Unit.PERCENTAGE);
-        rightPanelCreateBook.setWidth(100f, Unit.PERCENTAGE);
-
-        //left panel
-
-        leftPanel.addComponent(new Label("Book parameters"));
-
-        TextField bookTitleTextField = new TextField("Title");
-        bookTitleTextField.setWidth(100f, Unit.PERCENTAGE);
-
-        TextField authorsTextField = new TextField("Authors");
-        authorsTextField.setWidth(100f, Unit.PERCENTAGE);
-
-        TextField numberOfPagesTextField = new TextField("Number of pages");
-        numberOfPagesTextField.setWidth(100f, Unit.PERCENTAGE);
-
-        DateField yearDateField = new DateField("Year") {
-            @Override
-            protected Result<LocalDate> handleUnparsableDateString(
-                    String dateString) {
-                try {
-                    // try to parse with alternative format
-                    LocalDate parsedAtServer = LocalDate.parse(dateString, DateTimeFormatter.ofPattern("yyyy"));
-                    return Result.ok(parsedAtServer);
-                } catch (DateTimeParseException e) {
-                    return Result.error("Bad date");
-                }
-            }
-        };
-
-        yearDateField.setResolution(DateResolution.YEAR);
-        yearDateField.setTextFieldEnabled(true);
-        yearDateField.setDateFormat("yyyy");
-        yearDateField.setWidth(100f, Unit.PERCENTAGE);
-
-        TextField publishingHouseTextField = new TextField("Publishing house");
-        publishingHouseTextField.setWidth(100f, Unit.PERCENTAGE);
-
-        TextField priceTextField = new TextField("Price");
-        priceTextField.setWidth(100f, Unit.PERCENTAGE);
-
-        TextField numberOfCopiesTextField = new TextField("Number of copies");
-        numberOfCopiesTextField.setWidth(100f, Unit.PERCENTAGE);
-
-        ImageUploader pictureOfBookCoverImageUploader = new ImageUploader();
-        pictureOfBookCoverImageUploader.setWidth(100f, Unit.PERCENTAGE);
-
-        Button createBookButton = new Button("Create", event -> {
-            Book createdBook;
-            Map<String, Object> bookParameters = new HashMap<>();
-
-            if (bookTitleTextField.getValue().isEmpty()) {
-                UserError error = new UserError("Title can't be empty");
-                bookTitleTextField.setComponentError(error);
-                return;
-            } else {
-                bookTitleTextField.setComponentError(null);
-            }
-
-            if (authorsTextField.getValue().isEmpty()) {
-                UserError error = new UserError("Authors can't be empty");
-                authorsTextField.setComponentError(error);
-                return;
-            } else {
-                authorsTextField.setComponentError(null);
-            }
-
-            ListSelect<String> listWithCategories = (ListSelect<String>) rightPanelCreateBook.getComponent(1);
-
-            if (listWithCategories.getSelectedItems().isEmpty()) {
-                UserError error = new UserError("Should be selected 1 category at least");
-                listWithCategories.setComponentError(error);
-                return;
-            } else {
-                listWithCategories.setComponentError(null);
-            }
-
-            bookParameters.put("bookTitle", bookTitleTextField.getValue());
-            bookParameters.put("authors", Arrays.stream(authorsTextField.getValue().split(",")).map(item -> item.trim()).collect(Collectors.toSet()));
-            bookParameters.put("categories", bookCategoryService.findByCategories(listWithCategories.getSelectedItems()));
-            bookParameters.put("numberOfPages", numberOfPagesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfPagesTextField.getValue(), Integer.class));
-            bookParameters.put("year", (null != yearDateField.getValue()) ? (short) yearDateField.getValue().getYear() : (short) 0);
-            bookParameters.put("publishingHouse", publishingHouseTextField.getValue());
-            bookParameters.put("price", priceTextField.getValue().isEmpty() ? BigDecimal.ZERO : conversionService.convert(priceTextField.getValue(), BigDecimal.class));
-            bookParameters.put("numberOfCopies", numberOfCopiesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfCopiesTextField.getValue(), Integer.class));
-
-            if (pictureOfBookCoverImageUploader.getOutputStreamForImage().size() > 0) {
-                bookParameters.put("pictureOfBookCover", pictureOfBookCoverImageUploader.getOutputStreamForImage().toByteArray());
-            }
-
-            createdBook = bookService.save(bookParameters);
-
-            Notification.show("Book \"" + bookTitleTextField.getValue() + " " + authorsTextField.getValue() +
-                            ((null != createdBook) ? "\" created." : " didn't created."),
-                    Notification.Type.TRAY_NOTIFICATION);
-        });
-
-        ComponentValueValidation.validate(bookTitleTextField,
-                new StringLengthValidator("Title can't be empty", 0, 6000), conversionService, String.class);
-        //ComponentValueValidation.validate(authorsTextField, );
-        //ComponentValueValidation.validate(numberOfPagesTextField, );
-        //ComponentValueValidation.validate(yearDateField,
-        //        new IntegerRangeValidator("Value should be from 0 to 20000", 0, 20000), conversionService, Integer.class);
-        //ComponentValueValidation.validate(publishingHouseTextField, );
-        ComponentValueValidation.validate(priceTextField,
-                new BigDecimalRangeValidator("Value should have positive decimal format from 0 to 2000000",
-                        BigDecimal.valueOf(0l), BigDecimal.valueOf(2000000l)), conversionService, BigDecimal.class);
-        //ComponentValueValidation.validate(numberOfCopiesTextField, );
-
-        leftPanel.addComponents(bookTitleTextField, authorsTextField, numberOfPagesTextField,
-                yearDateField, publishingHouseTextField, priceTextField, numberOfCopiesTextField,
-                pictureOfBookCoverImageUploader, createBookButton);
-        leftPanel.setComponentAlignment(createBookButton, Alignment.TOP_LEFT);
-
-        //right panel
-
-        ListSelect<String> listWithCategories = new ListSelect<>();
-        listWithCategories.setWidth(100f, Unit.PERCENTAGE);
-        listWithCategories.setHeight(100f, Unit.PERCENTAGE);
-
-        listWithCategories.setItems(bookCategoryService.getAllStringCategories());
-
-        rightPanelCreateBook.addComponents(new Label("Choose book categories"), listWithCategories);
-        rightPanelCreateBook.setHeight(100f, Unit.PERCENTAGE);
-
-        createBookSplitLayout.addComponents(leftPanel, rightPanelCreateBook);
-
-        createBookLayout.addComponent(createBookSplitLayout);
+                    Notification.show("Book \"" + bookTitle + " " + authors +
+                                    ((resultOfOperation) ? "\" created." : " didn't created."),
+                            Notification.Type.TRAY_NOTIFICATION);
+                });
 
         window.setContent(createBookLayout);
         window.setSizeFull();
         window.center();
-        window.addCloseListener(e1 -> createLeftPanelForBooksMenu());
+        window.addCloseListener(e1 -> {
+            createLeftPanelForBooksMenu();
+            createRightPanelForBooksMenu();
+        });
         addWindow(window);
     }
 
-    private void createBookCategoryButtonClick(Button.ClickEvent e) {
+    private void createCategoryButtonClick(Button.ClickEvent e) {
         Window window = new Window("Create book category");
 
-        FormLayout createCategoryLayout = new FormLayout();
+        FormLayout createCategoryLayout = createLayoutForCategoryParameters(null, "Create",
+                (category, newCategoryName, books) -> {
+                    boolean resultOfOperation = categoryService.save(newCategoryName);
 
-        TextField categoryField = new TextField("New category");
-        categoryField.setWidth(100f, Unit.PERCENTAGE);
+                    int countOfChangedBooks = 0;
+                    if (resultOfOperation) {
+                        BookCategory createdCategory = categoryService.findByCategory(newCategoryName);
+                        countOfChangedBooks = bookService.addCategoryToBooks(createdCategory, books);
+                    }
 
-        Button createNewUserRoleButton = new Button("Create", (event) -> {
-
-            boolean resultOfOperation;
-
-            resultOfOperation = bookCategoryService.save(categoryField.getValue());
-
-            Notification.show("Category \"" + categoryField.getValue() +
-                            ((resultOfOperation) ? "\" created." : " didn't created."),
-                    Notification.Type.TRAY_NOTIFICATION);
-        });
-        createCategoryLayout.addComponents(categoryField, createNewUserRoleButton);
-        createCategoryLayout.setComponentAlignment(createNewUserRoleButton, Alignment.TOP_LEFT);
+                    Notification.show("Category \"" + newCategoryName +
+                                    ((resultOfOperation) ? "\" created." : " didn't created. " + "Category applied to " +
+                                            countOfChangedBooks + " books."),
+                            Notification.Type.TRAY_NOTIFICATION);
+                });
 
         window.setContent(createCategoryLayout);
         window.center();
         window.setModal(true);
-        window.addCloseListener(e1 -> createLeftPanelForCategoriesOfBooksMenu());
+        window.addCloseListener(e1 -> {
+            createLeftPanelForCategoriesMenu();
+            createRightPanelForCategoriesMenu();
+        });
         addWindow(window);
     }
 
@@ -828,7 +575,8 @@ public class AdminUI extends BaseUI {
                 resultIsYes -> {
                     if (resultIsYes) {
                         int countOfDeletedUsers = userService.delete(selectedItems);
-                        createLeftPanelForUserMenu();
+                        createLeftPanelForUsersMenu();
+                        createRightPanelForUsersMenu();
                         Notification.show(countOfDeletedUsers + " users deleted.",
                                 Notification.Type.TRAY_NOTIFICATION);
                     }
@@ -838,7 +586,7 @@ public class AdminUI extends BaseUI {
         addWindow(confirmDialogWindow);
     }
 
-    private void deleteUserRoleButtonClick(Button.ClickEvent e) {
+    private void deleteRoleButtonClick(Button.ClickEvent e) {
         VerticalLayout panel = (VerticalLayout) createAndShowAllItemsPanel.getFirstComponent();
         ListSelect<String> listWithUsers = (ListSelect<String>) panel.getComponent(0);
         Set<String> selectedItems = listWithUsers.getSelectedItems();
@@ -849,7 +597,8 @@ public class AdminUI extends BaseUI {
                 resultIsYes -> {
                     if (resultIsYes) {
                         int countOfDeletedUsers = roleService.delete(selectedItems);
-                        createLeftPanelForRolesOfUsersMenu();
+                        createLeftPanelForRolesMenu();
+                        createRightPanelForRolesMenu();
                         Notification.show(countOfDeletedUsers + " roles deleted",
                                 Notification.Type.TRAY_NOTIFICATION);
                     }
@@ -870,7 +619,8 @@ public class AdminUI extends BaseUI {
                 resultIsYes -> {
                     if (resultIsYes) {
                         int countOfDeletedUsers = bookService.delete(selectedItems);
-                        createLeftPanelForRolesOfUsersMenu();
+                        createLeftPanelForBooksMenu();
+                        createRightPanelForBooksMenu();
                         Notification.show(countOfDeletedUsers + " books deleted",
                                 Notification.Type.TRAY_NOTIFICATION);
                     }
@@ -880,7 +630,7 @@ public class AdminUI extends BaseUI {
         addWindow(confirmDialogWindow);
     }
 
-    private void deleteBookCategoryButtonClick(Button.ClickEvent e) {
+    private void deleteCategoryButtonClick(Button.ClickEvent e) {
         VerticalLayout panel = (VerticalLayout) createAndShowAllItemsPanel.getFirstComponent();
         ListSelect<String> listWithUsers = (ListSelect<String>) panel.getComponent(0);
         Set<String> selectedItems = listWithUsers.getSelectedItems();
@@ -890,8 +640,9 @@ public class AdminUI extends BaseUI {
                         StringUtils.collectionToDelimitedString(selectedItems, ", "),
                 resultIsYes -> {
                     if (resultIsYes) {
-                        int countOfDeletedUsers = bookCategoryService.delete(selectedItems);
-                        createLeftPanelForCategoriesOfBooksMenu();
+                        int countOfDeletedUsers = categoryService.delete(selectedItems);
+                        createLeftPanelForCategoriesMenu();
+                        createRightPanelForCategoriesMenu();
                         Notification.show(countOfDeletedUsers + " categories deleted.",
                                 Notification.Type.TRAY_NOTIFICATION);
                     }
@@ -899,5 +650,533 @@ public class AdminUI extends BaseUI {
 
         confirmDialogWindow.center();
         addWindow(confirmDialogWindow);
+    }
+
+    private FormLayout createLayoutForUserParameters(User user, String buttonCaption, UserButtonClick userButtonClickImpl) {
+        FormLayout userDetailsLayout = new FormLayout();
+
+        HorizontalSplitPanel horizontalPanel = new HorizontalSplitPanel();
+        VerticalLayout leftPanelUser = new VerticalLayout();
+        VerticalLayout rightPanelUser = new VerticalLayout();
+
+        boolean userIsNull = null == user;
+
+        //left panel
+
+        usernameField.setValue((!userIsNull) ? user.getUsername() : "");
+
+        passwordField.setValue("");
+        confirmPasswordField.setValue("");
+
+        leftPanelUser.addComponents(usernameField, passwordField, confirmPasswordField);
+        leftPanelUser.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+        //right panel
+
+        ListSelect<String> listWithRoles = new ListSelect<>();
+        listWithRoles.setWidth(100f, Unit.PERCENTAGE);
+
+        Set<String> roles = (!userIsNull) ? user.getRoles().stream().map(UserRole::getAuthority).collect(Collectors.toSet()) : new HashSet<>();
+        ListDataProvider<String> dataProvider = DataProvider.ofCollection(roles);
+
+        listWithRoles.setDataProvider(dataProvider);
+
+        Button actionButton = new Button(buttonCaption);
+        actionButton.addClickListener((event) -> {
+            boolean resultOfValidation;
+
+            resultOfValidation = ComponentValueValidation.addErrorOnComponent(usernameField,
+                    StringUtils.isEmpty(usernameField.getValue()),
+                    "Username can't be empty");
+
+            resultOfValidation = resultOfValidation || ComponentValueValidation.addErrorOnComponent(passwordField,
+                    StringUtils.isEmpty(passwordField.getValue()),
+                    "Password can't be empty");
+
+            resultOfValidation = resultOfValidation || ComponentValueValidation.addErrorOnComponent(listWithRoles,
+                    roles.isEmpty(),
+                    "Should be presented 1 role at least");
+
+            resultOfValidation = resultOfValidation || ComponentValueValidation.addErrorOnComponent(confirmPasswordField,
+                    null != passwordField.getValue() &&
+                            !passwordField.getValue().equals(confirmPasswordField.getValue()),
+                    "Passwords should be equal");
+
+            if (resultOfValidation) {
+                Notification.show("Please check fields filling", Notification.Type.ERROR_MESSAGE);
+                return;
+            }
+
+            userButtonClickImpl.doAction(user, usernameField.getValue(), passwordField.getValue(), roleService.findByRoles(roles));
+        });
+
+        Button addRolesButton = new Button("Add roles");
+        Button deleteRolesButton = new Button("Delete roles");
+
+        addRolesButton.addClickListener(event -> {
+            Window allRolesWindow = new Window("Choose roles");
+
+            VerticalLayout layout = new VerticalLayout();
+            HorizontalLayout horizontalLayout = new HorizontalLayout();
+
+            ListSelect<String> listWithAllRoles = new ListSelect<>();
+            listWithAllRoles.setSizeFull();
+            listWithAllRoles.setItems(new HashSet<>(roleService.getAllStringRoles()));
+
+            Button addButton = new Button("Add", ev -> {
+                if (!listWithAllRoles.getSelectedItems().isEmpty()) {
+                    roles.addAll(listWithAllRoles.getSelectedItems());
+                    dataProvider.refreshAll();
+
+                    allRolesWindow.close();
+                }
+            });
+
+            Button cancelButton = new Button("Cancel", ev -> allRolesWindow.close());
+
+            horizontalLayout.addComponents(addButton, cancelButton);
+
+            layout.addComponents(listWithAllRoles, horizontalLayout);
+            layout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+            allRolesWindow.setContent(layout);
+            allRolesWindow.center();
+            allRolesWindow.setModal(true);
+            addWindow(allRolesWindow);
+        });
+
+        deleteRolesButton.addClickListener(event -> {
+            Set<String> setWithSelectedRoles = listWithRoles.getSelectedItems();
+            if (!setWithSelectedRoles.isEmpty()) {
+                roles.removeAll(setWithSelectedRoles);
+                dataProvider.refreshAll();
+            }
+        });
+
+        rightPanelUser.addComponents(new Label(rolesCaption), listWithRoles, addRolesButton, deleteRolesButton);
+        rightPanelUser.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+        horizontalPanel.addComponents(leftPanelUser, rightPanelUser);
+
+        userDetailsLayout.addComponents(horizontalPanel, actionButton);
+
+        return userDetailsLayout;
+    }
+
+    private FormLayout createLayoutForRoleParameters(UserRole role, String buttonCaption, RoleButtonClick roleButtonClickImpl) {
+        FormLayout roleDetailsLayout = new FormLayout();
+
+        HorizontalSplitPanel horizontalPanel = new HorizontalSplitPanel();
+        VerticalLayout leftPanelRole = new VerticalLayout();
+        VerticalLayout rightPanelRole = new VerticalLayout();
+
+        boolean isRoleNull = null == role;
+
+        //left panel
+
+        TextField roleNameTextField = new TextField("Role name");
+        roleNameTextField.setWidth(100f, Unit.PERCENTAGE);
+        roleNameTextField.setValue((!isRoleNull) ? role.getAuthority() : "");
+
+        leftPanelRole.addComponent(roleNameTextField);
+        leftPanelRole.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+        //right panel
+
+        ListSelect<String> listWithUsers = new ListSelect<>();
+        listWithUsers.setWidth(100f, Unit.PERCENTAGE);
+        Set<String> users = (!isRoleNull) ? userService.findUsersByRolesContains(role).stream().map(User::getUsername).collect(Collectors.toSet())
+                : new HashSet<>();
+
+        ListDataProvider<String> dataProvider = DataProvider.ofCollection(users);
+        listWithUsers.setDataProvider(dataProvider);
+
+        Button actionButton = new Button(buttonCaption);
+
+        actionButton.addClickListener(event -> {
+            boolean resultOfValidation = ComponentValueValidation.addErrorOnComponent(roleNameTextField,
+                    StringUtils.isEmpty(roleNameTextField.getValue()),
+                    "Name of role can't be empty");
+
+            if (resultOfValidation) {
+                Notification.show("Please check fields filling", Notification.Type.ERROR_MESSAGE);
+                return;
+            }
+
+            roleButtonClickImpl.doAction(role, roleNameTextField.getValue(), userService.findByUserNames(users));
+        });
+
+        Button addUsersButton = new Button("Add users");
+        Button deleteUsersButton = new Button("Delete users");
+
+        addUsersButton.addClickListener(event -> {
+            Window allUsersWindow = new Window("Choose users");
+
+            VerticalLayout layout = new VerticalLayout();
+            HorizontalLayout horizontalLayout = new HorizontalLayout();
+
+            ListSelect<String> listWithAllUsers = new ListSelect<>();
+            listWithAllUsers.setSizeFull();
+            listWithAllUsers.setItems(new HashSet<>(userService.getAllUserNames()));
+
+            Button addButton = new Button("Add", ev -> {
+                if (!listWithAllUsers.getSelectedItems().isEmpty()) {
+                    users.addAll(listWithAllUsers.getSelectedItems());
+                    dataProvider.refreshAll();
+
+                    allUsersWindow.close();
+                }
+            });
+
+            Button cancelButton = new Button("Cancel", ev -> allUsersWindow.close());
+
+            horizontalLayout.addComponents(addButton, cancelButton);
+
+            layout.addComponents(listWithAllUsers, horizontalLayout);
+            layout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+            allUsersWindow.setContent(layout);
+            allUsersWindow.center();
+            allUsersWindow.setModal(true);
+            addWindow(allUsersWindow);
+        });
+
+        deleteUsersButton.addClickListener(event -> {
+            Set<String> setWithSelectedCategories = listWithUsers.getSelectedItems();
+            if (!setWithSelectedCategories.isEmpty()) {
+                users.removeAll(setWithSelectedCategories);
+                dataProvider.refreshAll();
+            }
+        });
+
+        rightPanelRole.addComponents(new Label(usersCaption), listWithUsers, addUsersButton, deleteUsersButton);
+        rightPanelRole.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+        horizontalPanel.addComponents(leftPanelRole, rightPanelRole);
+
+        roleDetailsLayout.addComponents(horizontalPanel, actionButton);
+
+        return roleDetailsLayout;
+    }
+
+    private FormLayout createLayoutForBookParameters(Book book, String buttonCaption, BookButtonClick bookButtonClickImpl) {
+        FormLayout bookDetailsLayout = new FormLayout();
+        HorizontalSplitPanel createBookSplitLayout = new HorizontalSplitPanel();
+        createBookSplitLayout.setHeight(100f, Unit.PERCENTAGE);
+        createBookSplitLayout.setWidth(100f, Unit.PERCENTAGE);
+
+        VerticalLayout leftPanel = new VerticalLayout();
+        leftPanel.setHeight(100f, Unit.PERCENTAGE);
+        leftPanel.setWidth(100f, Unit.PERCENTAGE);
+
+        VerticalLayout rightPanelCreateBook = new VerticalLayout();
+        rightPanelCreateBook.setHeight(100f, Unit.PERCENTAGE);
+        rightPanelCreateBook.setWidth(100f, Unit.PERCENTAGE);
+
+        boolean bookIsNull = null == book;
+
+        //left panel
+
+        leftPanel.addComponent(new Label("Book parameters"));
+
+        TextField bookTitleTextField = new TextField("Title");
+        bookTitleTextField.setWidth(100f, Unit.PERCENTAGE);
+        if (!bookIsNull) bookTitleTextField.setValue(book.getBookTitle());
+
+        TextField authorsTextField = new TextField("Authors");
+        authorsTextField.setWidth(100f, Unit.PERCENTAGE);
+        if (!bookIsNull) authorsTextField.setValue(StringUtils.collectionToDelimitedString(book.getAuthors(), ", "));
+
+        TextField numberOfPagesTextField = new TextField("Number of pages");
+        numberOfPagesTextField.setWidth(100f, Unit.PERCENTAGE);
+        if (!bookIsNull) numberOfPagesTextField.setValue(book.getNumberOfPages().toString());
+
+        TextField publishingHouseTextField = new TextField("Publishing house");
+        publishingHouseTextField.setWidth(100f, Unit.PERCENTAGE);
+        if (!bookIsNull && !StringUtils.isEmpty(book.getPublishingHouse()))
+            publishingHouseTextField.setValue(book.getPublishingHouse());
+
+        TextField priceTextField = new TextField("Price");
+        priceTextField.setWidth(100f, Unit.PERCENTAGE);
+
+        TextField numberOfCopiesTextField = new TextField("Number of copies");
+        numberOfCopiesTextField.setWidth(100f, Unit.PERCENTAGE);
+
+        DateField yearDateField = new DateField("Year") {
+            @Override
+            protected Result<LocalDate> handleUnparsableDateString(
+                    String dateString) {
+                try {
+                    // try to parse with alternative format
+                    LocalDate parsedAtServer = LocalDate.parse(dateString, DateTimeFormatter.ofPattern("yyyy"));
+                    return Result.ok(parsedAtServer);
+                } catch (DateTimeParseException e) {
+                    return Result.error("Bad date");
+                }
+            }
+        };
+
+        yearDateField.setResolution(DateResolution.YEAR);
+        yearDateField.setTextFieldEnabled(true);
+        yearDateField.setDateFormat("yyyy");
+        yearDateField.setWidth(100f, Unit.PERCENTAGE);
+        if (!bookIsNull)
+            yearDateField.setValue((null == book.getYear()) ? LocalDate.now() : LocalDate.of(book.getYear(), 1, 1));
+
+        DateField addingDayDateField = new DateField("Adding day");
+
+        addingDayDateField.setResolution(DateResolution.DAY);
+        addingDayDateField.setEnabled(false);
+        addingDayDateField.setDateFormat("yyyy-MM-dd");
+        addingDayDateField.setWidth(100f, Unit.PERCENTAGE);
+
+        if (!bookIsNull)
+            addingDayDateField.setValue((null == book.getAddingDay()) ? LocalDate.now() : book.getAddingDay());
+
+        ImageUploader pictureOfBookCoverImageUploader = new ImageUploader();
+        pictureOfBookCoverImageUploader.setWidth(100f, Unit.PERCENTAGE);
+        if (!bookIsNull && null != book.getPictureOfBookCover() &&
+                book.getPictureOfBookCover().isPresented()) {
+            pictureOfBookCoverImageUploader.setOutputStreamForImage(book.getPictureOfBookCover().getPictureOfBookCover());
+            pictureOfBookCoverImageUploader.resetProgressbar();
+            pictureOfBookCoverImageUploader.showImage();
+        }
+
+        ComponentValueValidation.validate(bookTitleTextField,
+                new StringLengthValidator("Title can't be empty", 1, 6000), conversionService, String.class);
+        ComponentValueValidation.validate(authorsTextField,
+                new StringLengthValidator("Authors can't be empty", 1, 6000), conversionService, String.class);
+        ComponentValueValidation.validate(priceTextField,
+                new BigDecimalRangeValidator("Value should have positive decimal format from 0 to 2000000",
+                        BigDecimal.valueOf(0l), BigDecimal.valueOf(2000000l)), conversionService, BigDecimal.class);
+
+        leftPanel.addComponents(bookTitleTextField, authorsTextField, numberOfPagesTextField,
+                yearDateField, publishingHouseTextField, priceTextField, numberOfCopiesTextField,
+                addingDayDateField,
+                pictureOfBookCoverImageUploader);
+        leftPanel.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+        //right panel
+
+        ListSelect<String> listWithCategories = new ListSelect<>();
+        listWithCategories.setWidth(100f, Unit.PERCENTAGE);
+        listWithCategories.setHeight(100f, Unit.PERCENTAGE);
+
+        Set<String> categories = (!bookIsNull) ? book.getCategories().stream().map(BookCategory::getCategory).collect(Collectors.toSet()) :
+                new HashSet<>();
+
+        ListDataProvider<String> dataProvider = DataProvider.ofCollection(categories);
+        listWithCategories.setDataProvider(dataProvider);
+
+        Button addCategoriesButton = new Button("Add categories");
+        Button deleteCategoriesButton = new Button("Delete categories");
+
+        addCategoriesButton.addClickListener(event -> {
+            Window allCategoriesWindow = new Window("Choose categories");
+
+            VerticalLayout layout = new VerticalLayout();
+            HorizontalLayout horizontalLayout = new HorizontalLayout();
+
+            ListSelect<String> listWithAllCategories = new ListSelect<>();
+            listWithAllCategories.setSizeFull();
+            listWithAllCategories.setItems(new HashSet<>(categoryService.getAllStringCategories()));
+
+            Button addButton = new Button("Add", ev -> {
+                if (!listWithAllCategories.getSelectedItems().isEmpty()) {
+                    categories.addAll(listWithAllCategories.getSelectedItems());
+                    dataProvider.refreshAll();
+                    allCategoriesWindow.close();
+                }
+            });
+
+            Button cancelButton = new Button("Cancel", ev -> allCategoriesWindow.close());
+
+            horizontalLayout.addComponents(addButton, cancelButton);
+
+            layout.addComponents(listWithAllCategories, horizontalLayout);
+            layout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+            allCategoriesWindow.setContent(layout);
+            allCategoriesWindow.center();
+            allCategoriesWindow.setModal(true);
+            addWindow(allCategoriesWindow);
+        });
+
+        deleteCategoriesButton.addClickListener(event -> {
+            Set<String> setWithSelectedCategories = listWithCategories.getSelectedItems();
+            if (!setWithSelectedCategories.isEmpty()) {
+                categories.removeAll(setWithSelectedCategories);
+                dataProvider.refreshAll();
+            }
+        });
+
+        rightPanelCreateBook.addComponents(new Label("Choose book categories"), listWithCategories,
+                addCategoriesButton, deleteCategoriesButton);
+        rightPanelCreateBook.setHeight(100f, Unit.PERCENTAGE);
+
+        Button actionButton = new Button(buttonCaption);
+
+        actionButton.addClickListener(event -> {
+            boolean resultOfValidation;
+
+            resultOfValidation = ComponentValueValidation.addErrorOnComponent(bookTitleTextField,
+                    bookTitleTextField.getValue().isEmpty(),
+                    "Title can't be empty");
+
+            resultOfValidation = resultOfValidation || ComponentValueValidation.addErrorOnComponent(bookTitleTextField,
+                    null != bookTitleTextField.getComponentError(),
+                    null != bookTitleTextField.getComponentError() ? bookTitleTextField.getComponentError().getFormattedHtmlMessage() : "");
+
+            resultOfValidation = resultOfValidation || ComponentValueValidation.addErrorOnComponent(authorsTextField,
+                    authorsTextField.getValue().isEmpty(),
+                    "Authors can't be empty");
+
+            resultOfValidation = resultOfValidation || ComponentValueValidation.addErrorOnComponent(authorsTextField,
+                    null != authorsTextField.getComponentError(),
+                    null != authorsTextField.getComponentError() ? authorsTextField.getComponentError().getFormattedHtmlMessage() : "");
+
+            resultOfValidation = resultOfValidation || ComponentValueValidation.addErrorOnComponent(listWithCategories,
+                    categories.isEmpty(),
+                    "Should be presented 1 category at least");
+
+            if (resultOfValidation) {
+                Notification.show("Please, check fields filling", Notification.Type.ERROR_MESSAGE);
+                return;
+            }
+
+            Map<String, Object> bookParameters = new HashMap<>();
+
+            bookParameters.put("bookTitle", bookTitleTextField.getValue());
+            bookParameters.put("authors", Arrays.stream(authorsTextField.getValue().split(",")).map(item -> item.trim()).collect(Collectors.toSet()));
+            bookParameters.put("categories", categoryService.findByCategories(categories));
+            bookParameters.put("numberOfPages", numberOfPagesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfPagesTextField.getValue(), Integer.class));
+            bookParameters.put("year", (null != yearDateField.getValue()) ? (short) yearDateField.getValue().getYear() : (short) 0);
+            bookParameters.put("publishingHouse", publishingHouseTextField.getValue());
+            bookParameters.put("price", priceTextField.getValue().isEmpty() ? BigDecimal.ZERO : conversionService.convert(priceTextField.getValue(), BigDecimal.class));
+            bookParameters.put("numberOfCopies", numberOfCopiesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfCopiesTextField.getValue(), Integer.class));
+
+            if (pictureOfBookCoverImageUploader.getOutputStreamForImage().size() > 0) {
+                bookParameters.put("pictureOfBookCover", pictureOfBookCoverImageUploader.getOutputStreamForImage().toByteArray());
+            }
+
+            bookButtonClickImpl.doAction(book, bookParameters);
+        });
+
+        createBookSplitLayout.addComponents(leftPanel, rightPanelCreateBook);
+
+        bookDetailsLayout.addComponents(createBookSplitLayout, actionButton);
+
+        return bookDetailsLayout;
+    }
+
+    private FormLayout createLayoutForCategoryParameters(BookCategory category, String buttonCaption, CategoryButtonClick categoryButtonClickImpl) {
+        FormLayout categoryDetailsLayout = new FormLayout();
+
+        HorizontalSplitPanel horizontalPanel = new HorizontalSplitPanel();
+        VerticalLayout leftPanelRole = new VerticalLayout();
+        VerticalLayout rightPanelRole = new VerticalLayout();
+
+        boolean isCategoryNull = null == category;
+
+        //left panel
+
+        TextField categoryNameTextField = new TextField("Category name");
+        categoryNameTextField.setWidth(100f, Unit.PERCENTAGE);
+        categoryNameTextField.setValue((!isCategoryNull) ? category.getCategory() : "");
+
+        leftPanelRole.addComponent(categoryNameTextField);
+        leftPanelRole.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+        //right panel
+
+        ListSelect<Book> listWithBooks = new ListSelect<>();
+        listWithBooks.setWidth(100f, Unit.PERCENTAGE);
+        Set<Book> books = (!isCategoryNull) ? bookService.findBooksByCategoriesContains(category) : new HashSet<>();
+
+        ListDataProvider<Book> dataProvider = DataProvider.ofCollection(books);
+        listWithBooks.setDataProvider(dataProvider);
+
+        Button actionButton = new Button(buttonCaption);
+
+        actionButton.addClickListener(event -> {
+            boolean resultOfValidation = ComponentValueValidation.addErrorOnComponent(categoryNameTextField,
+                    StringUtils.isEmpty(categoryNameTextField.getValue()),
+                    "Name of category can't be empty");
+
+            if (resultOfValidation) {
+                Notification.show("Please check fields filling", Notification.Type.ERROR_MESSAGE);
+                return;
+            }
+
+            categoryButtonClickImpl.doAction(category, categoryNameTextField.getValue(), books);
+        });
+
+        Button addBooksButton = new Button("Add books");
+        Button deleteBooksButton = new Button("Delete books");
+
+        addBooksButton.addClickListener(event -> {
+            Window allBooksWindow = new Window("Choose books");
+
+            VerticalLayout layout = new VerticalLayout();
+            HorizontalLayout horizontalLayout = new HorizontalLayout();
+
+            ListSelect<Book> listWithAllBooks = new ListSelect<>();
+            listWithAllBooks.setSizeFull();
+            listWithAllBooks.setItems(new HashSet<>(bookService.getAllBooks()));
+
+            Button addButton = new Button("Add", ev -> {
+                if (!listWithAllBooks.getSelectedItems().isEmpty()) {
+                    books.addAll(listWithAllBooks.getSelectedItems());
+                    dataProvider.refreshAll();
+
+                    allBooksWindow.close();
+                }
+            });
+
+            Button cancelButton = new Button("Cancel", ev -> allBooksWindow.close());
+
+            horizontalLayout.addComponents(addButton, cancelButton);
+
+            layout.addComponents(listWithAllBooks, horizontalLayout);
+            layout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+            allBooksWindow.setContent(layout);
+            allBooksWindow.center();
+            allBooksWindow.setModal(true);
+            addWindow(allBooksWindow);
+        });
+
+        deleteBooksButton.addClickListener(event -> {
+            Set<Book> setWithSelectedCategories = listWithBooks.getSelectedItems();
+            if (!setWithSelectedCategories.isEmpty()) {
+                books.removeAll(setWithSelectedCategories);
+                dataProvider.refreshAll();
+            }
+        });
+
+        rightPanelRole.addComponents(new Label(booksCaption), listWithBooks, addBooksButton, deleteBooksButton);
+        rightPanelRole.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+        horizontalPanel.addComponents(leftPanelRole, rightPanelRole);
+
+        categoryDetailsLayout.addComponents(horizontalPanel, actionButton);
+
+        return categoryDetailsLayout;
+    }
+
+    private interface BookButtonClick {
+        void doAction(Book book, Map<String, Object> bookParameters);
+    }
+
+    private interface UserButtonClick {
+        void doAction(User user, String username, String password, Set<UserRole> roles);
+    }
+
+    private interface RoleButtonClick {
+        void doAction(UserRole role, String newRoleName, Set<User> users);
+    }
+
+    private interface CategoryButtonClick {
+        void doAction(BookCategory category, String newCategoryName, Set<Book> books);
     }
 }

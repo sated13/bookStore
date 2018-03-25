@@ -16,9 +16,6 @@ public class BookCategory implements Serializable {
     @Column(nullable = false)
     private String category = "";
 
-    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "categories")
-    private Set<Book> books;
-
     public BookCategory() {
     }
 
@@ -30,16 +27,23 @@ public class BookCategory implements Serializable {
         this.category = category;
     }
 
-    public Set<Book> getBooks() {
-        return books;
-    }
-
-    public void setBooks(Set<Book> books) {
-        this.books = books;
-    }
-
     @Override
     public String toString() {
         return category;
+    }
+
+    @Override
+    public int hashCode() {
+        return category.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (null == obj) return false;
+        if (this == obj) return true;
+        if (!(obj instanceof BookCategory)) return false;
+
+        BookCategory bookCategory = (BookCategory) obj;
+        return bookCategoryId.equals(bookCategory.bookCategoryId);
     }
 }

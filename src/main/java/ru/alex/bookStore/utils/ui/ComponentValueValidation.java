@@ -1,11 +1,11 @@
-package ru.alex.bookStore.utils;
+package ru.alex.bookStore.utils.ui;
 
 import com.vaadin.data.ValidationResult;
 import com.vaadin.data.Validator;
 import com.vaadin.data.ValueContext;
 import com.vaadin.server.UserError;
+import com.vaadin.ui.AbstractComponent;
 import com.vaadin.ui.AbstractField;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.convert.ConversionService;
 
 public class ComponentValueValidation {
@@ -30,6 +30,21 @@ public class ComponentValueValidation {
                 field.setComponentError(error);
             }
         });
+    }
+
+    public static boolean addErrorOnComponent(AbstractComponent componentForAddingError, boolean resultOfValidation,
+                                                  String errorMessage) {
+        boolean returningResult = false;
+        if (resultOfValidation) {
+            UserError error = new UserError(errorMessage);
+            componentForAddingError.setComponentError(error);
+            returningResult = true;
+        }
+        else {
+            componentForAddingError.setComponentError(null);
+            returningResult = false;
+        }
+        return returningResult;
     }
 
 }

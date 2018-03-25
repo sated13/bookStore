@@ -13,9 +13,7 @@ import ru.alex.bookStore.utils.roles.RoleService;
 import ru.alex.bookStore.utils.security.SecurityService;
 import ru.alex.bookStore.utils.users.UserService;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class BaseUI extends UI {
@@ -29,7 +27,7 @@ public class BaseUI extends UI {
     @Autowired
     RoleService roleService;
     @Autowired
-    private SecurityService securityService;
+    protected SecurityService securityService;
 
     Button loginButton = new Button("Login", this::loginButtonClick);
     Button registerButton = new Button("Register", this::registerButtonClick);
@@ -39,8 +37,8 @@ public class BaseUI extends UI {
     PasswordField passwordField = new PasswordField("Password", "");
     PasswordField confirmPasswordField = new PasswordField("Confirm password", "");
     protected VaadinRequest localVaadinRequest;
-    private Boolean authorizationUIflag = false;
-    private Boolean registrationUIflag = false;
+    private Boolean authorizationUIFlag = false;
+    private Boolean registrationUIFlag = false;
 
     private final String customerRole = "customer";
 
@@ -71,7 +69,7 @@ public class BaseUI extends UI {
         HorizontalLayout horizontalPanelForButtons = new HorizontalLayout();
 
         horizontalPanelForButtons.addComponent(loginButton);
-        if (authorizationUIflag) horizontalPanelForButtons.addComponent(resisterOnAuthorizationUIButton);
+        if (authorizationUIFlag) horizontalPanelForButtons.addComponent(resisterOnAuthorizationUIButton);
 
         components.addComponent(horizontalPanelForButtons);
         components.setSizeUndefined();
@@ -89,7 +87,7 @@ public class BaseUI extends UI {
         window.setResizable(false);
         window.setModal(true);
 
-        if (authorizationUIflag) window.setClosable(false);
+        if (authorizationUIFlag) window.setClosable(false);
 
         addWindow(window);
     }
@@ -118,7 +116,7 @@ public class BaseUI extends UI {
         window.setResizable(false);
         window.setModal(true);
 
-        if (registrationUIflag) window.setClosable(false);
+        if (registrationUIFlag) window.setClosable(false);
 
         addWindow(window);
     }
@@ -170,18 +168,18 @@ public class BaseUI extends UI {
     }
 
     public Boolean isAuthorizationUI() {
-        return authorizationUIflag;
+        return authorizationUIFlag;
     }
 
-    public void setAuthorizationUIflag(Boolean flag) {
-        authorizationUIflag = flag;
+    public void setAuthorizationUIFlag(Boolean flag) {
+        authorizationUIFlag = flag;
     }
 
     public Boolean isRegistrationUI() {
-        return registrationUIflag;
+        return registrationUIFlag;
     }
 
-    public void setRegistrationUIflag(Boolean flag) {
-        registrationUIflag = flag;
+    public void setRegistrationUIFlag(Boolean flag) {
+        registrationUIFlag = flag;
     }
 }

@@ -23,7 +23,7 @@ public class User {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "users_roles",
             joinColumns = @JoinColumn(name = "user_Id", referencedColumnName = "user_Id"),
-            inverseJoinColumns = @JoinColumn(name = "user_role_id", referencedColumnName= "user_role_id"))
+            inverseJoinColumns = @JoinColumn(name = "user_role_id", referencedColumnName = "user_role_id"))
     private Set<UserRole> roles;
 
     @Column(nullable = false)
@@ -57,8 +57,12 @@ public class User {
         this.roles = authorities;
     }
 
-    public void addUserRoles(UserRole userRole) {
-        this.roles.add(userRole);
+    public void addRole(UserRole Role) {
+        this.roles.add(Role);
+    }
+
+    public void deleteRole(UserRole role) {
+        this.roles.remove(role);
     }
 
     public boolean isEnabled() {
@@ -70,11 +74,13 @@ public class User {
     }
 
     @Override
-    public boolean equals(Object rhs) {
-        if (rhs instanceof org.springframework.security.core.userdetails.User) {
-            return username.equals(((User) rhs).username);
-        }
-        return false;
+    public boolean equals(Object obj) {
+        if (null == obj) return false;
+        if (this == obj) return true;
+        if (!(obj instanceof User)) return false;
+
+        User user = (User) obj;
+        return userId.equals(user.userId);
     }
 
     @Override
@@ -102,8 +108,7 @@ public class User {
 
                 sb.append(auth);
             }
-        }
-        else {
+        } else {
             sb.append("Not granted any authorities");
         }
 

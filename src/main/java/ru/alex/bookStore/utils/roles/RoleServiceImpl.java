@@ -3,7 +3,6 @@ package ru.alex.bookStore.utils.roles;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import ru.alex.bookStore.entities.User;
 import ru.alex.bookStore.entities.UserRole;
 import ru.alex.bookStore.repository.RoleRepository;
 
@@ -19,11 +18,13 @@ public class RoleServiceImpl implements RoleService {
     }
 
     public boolean save(String role) {
-        UserRole userRole = new UserRole();
-        userRole.setAuthority(role);
         try {
-            roleRepository.save(userRole);
-            return true;
+            if (null == findByRole(role)) {
+                UserRole userRole = new UserRole();
+                userRole.setAuthority(role);
+                roleRepository.save(userRole);
+                return true;
+            } else return false;
         } catch (Exception e) {
             //ToDo: add logging
             return false;
@@ -59,6 +60,16 @@ public class RoleServiceImpl implements RoleService {
         }
 
         return result;
+    }
+
+    @Override
+    public long countRoles() {
+        try {
+            return roleRepository.count();
+        } catch (Exception e) {
+            //ToDo: add logging
+            return 0;
+        }
     }
 
     public UserRole findByRole(String role) {
@@ -98,18 +109,11 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public Set<User> getUsersByRole(String role) {
-        return Collections.unmodifiableSet(roleRepository.findByAuthority(role).getUsers());
-    }
-
-    @Override
-    public boolean changeRoleDetails(String role, String roleName, Set<User> users) {
+    public boolean changeRoleDetails(UserRole role, String roleName/*, Set<User> users*/) {
         try {
-            UserRole roleObject = findByRole(role);
-
-            if (roleObject != null) {
-                roleObject.setAuthority(roleName);
-                roleObject.setUsers(users);
+            if (role != null) {
+                role.setAuthority(roleName);
+                roleRepository.save(role);
                 return true;
             } else {
                 return false;

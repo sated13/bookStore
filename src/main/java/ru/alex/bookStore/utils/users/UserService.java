@@ -4,6 +4,7 @@ import ru.alex.bookStore.entities.User;
 import ru.alex.bookStore.entities.UserRole;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface UserService {
@@ -16,9 +17,17 @@ public interface UserService {
 
     int delete(Set<String> users);
 
+    long countUsers();
+
     User findByUsername(String username);
 
     Set<User> findByUserNames(Set<String> userNames);
+
+    Map<UserRole, Set<User>> getUsersByRoles();
+
+    Map<UserRole, Integer> getCountOfUsersByRoles();
+
+    Integer countOfUsersWithRole(UserRole role);
 
     List<User> getAllUsers();
 
@@ -31,4 +40,15 @@ public interface UserService {
     boolean isAdmin(User user);
 
     boolean changeUserDetails(String user, String newUserName, String password, Set<UserRole> roles);
+
+    Set<User> findUsersByRolesContains(UserRole role);
+
+    int addRoleToUsers(UserRole role, Set<User> users);
+
+    /**
+     * Set role only on users from Set
+     * @param role  role for users
+     * @param users only users from this set should have this role
+     */
+    int setRoleOnUsers(UserRole role, Set<User> users);
 }

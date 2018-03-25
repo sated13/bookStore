@@ -1,6 +1,5 @@
 package ru.alex.bookStore.utils.roles;
 
-import ru.alex.bookStore.entities.User;
 import ru.alex.bookStore.entities.UserRole;
 
 import java.util.List;
@@ -14,6 +13,8 @@ public interface RoleService {
 
     int delete(Set<String> users);
 
+    long countRoles();
+
     UserRole findByRole(String role);
 
     Set<UserRole> findByRoles(Set<String> roles);
@@ -22,7 +23,5 @@ public interface RoleService {
 
     List<String> getAllStringRoles();
 
-    Set<User> getUsersByRole(String role);
-
-    boolean changeRoleDetails(String role, String roleName, Set<User> users);
+    boolean changeRoleDetails(UserRole role, String roleName);
 }

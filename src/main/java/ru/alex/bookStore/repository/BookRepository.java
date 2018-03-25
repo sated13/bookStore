@@ -1,18 +1,21 @@
 package ru.alex.bookStore.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import ru.alex.bookStore.entities.Book;
+import ru.alex.bookStore.entities.BookCategory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface BookRepository extends JpaRepository<Book, Long> {
 
     List<Book> findBooksByBookTitle(String bookTitle);
 
-    /*List<Book> findBooksByAuthorsContains(String author);
+    Set<Book> findBooksByCategoriesContains(BookCategory category);
 
-    List<Book> findBooksByBookTitleContains(String stringInBookTitle);
+    Integer countBooksByCategoriesContains(BookCategory category);
 
-    List<Book> findBooksByAuthorsAndBookTitleAnd(Set<String> authors, String bookTitle);*/
+    Set<Book> findTop10ByOrderByAddingDayDesc();
 }

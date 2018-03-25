@@ -1,16 +1,12 @@
 package ru.alex.bookStore.entities;
 
-import org.hibernate.Hibernate;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.time.LocalDate;
+import java.util.*;
 
 @Entity
 @Table(name = "books")
@@ -38,6 +34,8 @@ public class Book implements Serializable {
     private String publishingHouse = "";
     private BigDecimal price = new BigDecimal(0);
     private Integer numberOfCopies = 0;
+    private Integer countOfSoldItems = 0;
+    private LocalDate addingDay;
 
     @OneToOne(fetch = FetchType.EAGER)
     private Cover pictureOfBookCover;
@@ -93,10 +91,12 @@ public class Book implements Serializable {
         this.authors.add(author);
     }
 
-    public void addCategory(String category) {
-        BookCategory bookCategory = new BookCategory();
-        bookCategory.setCategory(category);
-        this.categories.add(bookCategory);
+    public void addCategory(BookCategory category) {
+        categories.add(category);
+    }
+
+    public void deleteCategory(BookCategory category) {
+        categories.remove(category);
     }
 
     public void setCategories(Set<BookCategory> categories) {
@@ -123,6 +123,22 @@ public class Book implements Serializable {
         this.numberOfCopies = numberOfCopies;
     }
 
+    public Integer getCountOfSoldItems() {
+        return countOfSoldItems;
+    }
+
+    public void setCountOfSoldItems(Integer countOfSoldItems) {
+        this.countOfSoldItems = countOfSoldItems;
+    }
+
+    public LocalDate getAddingDay() {
+        return addingDay;
+    }
+
+    public void setAddingDay(LocalDate addingDay) {
+        this.addingDay = addingDay;
+    }
+
     public void setPictureOfBookCover(Cover pictureOfBookCover) {
         this.pictureOfBookCover = pictureOfBookCover;
     }
@@ -135,5 +151,20 @@ public class Book implements Serializable {
                 .append(" ")
                 .append(StringUtils.collectionToCommaDelimitedString(authors));
         return result.toString();
+    }
+
+    @Override
+    public int hashCode() {
+        return (toString()).hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (null == obj) return false;
+        if (this == obj) return true;
+        if (!(obj instanceof Book)) return false;
+
+        Book book = (Book) obj;
+        return bookId.equals(book.bookId);
     }
 }

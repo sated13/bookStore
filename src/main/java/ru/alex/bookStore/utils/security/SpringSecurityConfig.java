@@ -7,9 +7,13 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import ru.alex.bookStore.utils.users.ActiveUserRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -29,12 +33,12 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                         "/vaadinServlet/**", "/h2-console", "/h2-console/**",
                         "/register", "/main")
                 .permitAll()
-                //make for users with 'admin' role
-                //.antMatchers("/adminPanel", "/adminPanel/**").permitAll()
                 .antMatchers("/adminPanel", "/adminPanel/**").hasAuthority("admin")
                 .antMatchers("/**").fullyAuthenticated()
                 .and()
                 .logout().permitAll();
+        /*http.sessionManagement().maximumSessions(1).sessionRegistry(sessionRegistry());
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.ALWAYS);*/
         http.headers().frameOptions().sameOrigin();
     }
 
@@ -46,5 +50,15 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
         authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+    }
+
+    /*@Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }*/
+
+    @Bean
+    public ActiveUserRepository activeUserRepository() {
+        return new ActiveUserRepository();
     }
 }

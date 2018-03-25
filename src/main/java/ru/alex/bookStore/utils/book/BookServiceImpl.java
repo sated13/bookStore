@@ -1,17 +1,18 @@
 package ru.alex.bookStore.utils.book;
 
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.alex.bookStore.entities.Book;
 import ru.alex.bookStore.entities.BookCategory;
 import ru.alex.bookStore.entities.Cover;
 import ru.alex.bookStore.repository.BookRepository;
+import ru.alex.bookStore.repository.CategoryRepository;
+import ru.alex.bookStore.utils.bookCategory.CategoryService;
 import ru.alex.bookStore.utils.cover.CoverService;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,22 +23,25 @@ public class BookServiceImpl implements BookService {
     BookRepository bookRepository;
     @Autowired
     CoverService coverService;
+    @Autowired
+    CategoryService categoryService;
 
     @Override
-    public Book save(Map<String, Object> bookParameters) {
+    public boolean save(Map<String, Object> bookParameters) {
         Book newBook = new Book();
         Cover cover = setParameters(newBook, bookParameters);
 
         try {
             newBook.setPictureOfBookCover(cover);
+            newBook.setAddingDay(LocalDate.now());
             coverService.save(cover);
             bookRepository.save(newBook);
         } catch (Exception e) {
             //ToDo: add logging
-            return null;
+            return false;
         }
 
-        return newBook;
+        return true;
     }
 
     @Override
@@ -60,6 +64,62 @@ public class BookServiceImpl implements BookService {
         }
 
         return result;
+    }
+
+    @Override
+    public Map<BookCategory, Set<Book>> getBooksByCategories() {
+        Map<BookCategory, Set<Book>> resultMap = new HashMap<>();
+
+        try {
+            List<BookCategory> categories = categoryService.getAllCategories();
+            Set<Book> setOfBooksForCategory;
+
+            for (BookCategory category : categories) {
+                setOfBooksForCategory = findBooksByCategoriesContains(category);
+                resultMap.put(category, setOfBooksForCategory);
+            }
+        } catch (Exception e) {
+            //ToDo: add logging
+        }
+
+        return resultMap;
+    }
+
+    @Override
+    public Integer countOfBooksWithCategory(BookCategory category) {
+        try {
+            return bookRepository.countBooksByCategoriesContains(category);
+        } catch (Exception e) {
+            //ToDo: add logging
+            return 0;
+        }
+    }
+
+    @Override
+    public Map<BookCategory, Integer> getCountOfBooksByCategories() {
+        Map<BookCategory, Integer> resultMap = new HashMap<>();
+
+        try {
+            List<BookCategory> categories = categoryService.getAllCategories();
+
+            for (BookCategory category : categories) {
+                resultMap.put(category, bookRepository.countBooksByCategoriesContains(category));
+            }
+        } catch (Exception e) {
+            //ToDo: add logging
+        }
+
+        return resultMap;
+    }
+
+    @Override
+    public long countBooks() {
+        try {
+            return bookRepository.count();
+        } catch (Exception e) {
+            //ToDo: add logging
+            return 0;
+        }
     }
 
     @Override
@@ -97,11 +157,31 @@ public class BookServiceImpl implements BookService {
                 book.setPictureOfBookCover(cover);
                 coverService.save(cover);
             }
-
+            bookRepository.save(book);
             return true;
         } catch (Exception e) {
             //ToDo: add logging
             return false;
+        }
+    }
+
+    @Override
+    public Set<Book> findBooksByCategoriesContains(BookCategory category) {
+        try {
+            return bookRepository.findBooksByCategoriesContains(category);
+        } catch (Exception e) {
+            //ToDo: add logging
+            return null;
+        }
+    }
+
+    @Override
+    public Set<Book> findTop10BooksOrderedByAddingDay() {
+        try {
+            return bookRepository.findTop10ByOrderByAddingDayDesc();
+        } catch (Exception e) {
+            //ToDo: add logging
+            return null;
         }
     }
 
@@ -151,5 +231,43 @@ public class BookServiceImpl implements BookService {
         }
 
         return cover;
+    }
+
+    @Override
+    public int addCategoryToBooks(BookCategory category, Set<Book> books) {
+        int countOfChangedBooks = 0;
+
+        for (Book book : books) {
+            try {
+                book.addCategory(category);
+                bookRepository.save(book);
+                countOfChangedBooks++;
+            } catch (Exception e) {
+                //ToDo: add logging
+            }
+        }
+
+        return countOfChangedBooks;
+    }
+
+    @Override
+    public int setCategoryOnBooks(BookCategory category, Set<Book> books) {
+        int countOfChangedBooks = 0;
+        Set<Book> booksWithCategory = findBooksByCategoriesContains(category);
+
+        for (Book book : booksWithCategory) {
+            try {
+                if (!books.contains(book)) {
+                    book.deleteCategory(category);
+                    bookRepository.save(book);
+                    countOfChangedBooks++;
+                }
+            } catch (Exception e) {
+                //ToDo: add logging
+                e.printStackTrace(System.out);
+            }
+        }
+
+        return countOfChangedBooks;
     }
 }

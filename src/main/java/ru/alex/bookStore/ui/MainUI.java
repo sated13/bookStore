@@ -5,24 +5,21 @@ import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import ru.alex.bookStore.entities.Book;
 import ru.alex.bookStore.entities.BookCategory;
 import org.springframework.security.core.userdetails.User;
-import ru.alex.bookStore.repository.BookCategoryRepository;
-import ru.alex.bookStore.repository.RoleRepository;
+import ru.alex.bookStore.repository.CategoryRepository;
+import ru.alex.bookStore.utils.ui.ImageUploader;
 
-import java.util.Collection;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @SpringUI(path = "/main")
 public class MainUI extends BaseUI {
 
     @Autowired
-    BookCategoryRepository bookCategoryRepository;
-    @Autowired
-    RoleRepository roleRepository;
+    CategoryRepository categoryRepository;
 
     Button loginButtonBase = new Button("Login", this::loginButtonBaseClick);
     Button registerButtonBase = new Button("Register", this::registerButtonBaseClick);
@@ -73,8 +70,6 @@ public class MainUI extends BaseUI {
         }
 
         horizontalPanelForButtons.setWidth(horizontalPanelSize, Unit.PIXELS);
-        components.addComponent(horizontalPanelForButtons);
-        components.setComponentAlignment(horizontalPanelForButtons, Alignment.TOP_RIGHT);
 
         HorizontalLayout menuLayout = new HorizontalLayout();
         menuLayout.setWidth(100f, Unit.PERCENTAGE);
@@ -92,7 +87,7 @@ public class MainUI extends BaseUI {
 
         MenuBar.MenuItem categoriesMenuItem = menuBar.addItem("Categories", null, null);
 
-        List<BookCategory> allBookCategories = bookCategoryRepository.findAll();
+        List<BookCategory> allBookCategories = categoryRepository.findAll();
 
         for (BookCategory bookCategory : allBookCategories) {
             categoriesMenuItem.addItem(bookCategory.getCategory(), null, null);
@@ -103,13 +98,14 @@ public class MainUI extends BaseUI {
         menuLayout.addComponent(menuBar);
         menuLayout.addComponent(aboutUsButton);
 
-        menuLayout.setComponentAlignment(newButton, Alignment.MIDDLE_CENTER);
-        menuLayout.setComponentAlignment(bestsellersButton, Alignment.MIDDLE_CENTER);
-        menuLayout.setComponentAlignment(menuBar, Alignment.MIDDLE_CENTER);
-        menuLayout.setComponentAlignment(aboutUsButton, Alignment.MIDDLE_CENTER);
+        menuLayout.setDefaultComponentAlignment(Alignment.MIDDLE_CENTER);
 
+        AbsoluteLayout layoutForBooks = new AbsoluteLayout();
+
+        components.addComponent(horizontalPanelForButtons);
         components.addComponent(menuLayout);
 
+        components.setComponentAlignment(horizontalPanelForButtons, Alignment.TOP_RIGHT);
         components.setComponentAlignment(menuLayout, Alignment.TOP_CENTER);
 
         window.setContent(components);
@@ -117,6 +113,27 @@ public class MainUI extends BaseUI {
         window.setResizable(false);
         window.setClosable(false);
         addWindow(window);
+    }
+
+    private FormLayout createLayoutForBookDetails(@NotNull Book book) {
+        FormLayout bookDetailsFormLayout = new FormLayout();
+
+        HorizontalLayout layoutForComponents = new HorizontalLayout();
+        layoutForComponents.setSizeFull();
+
+        ImageUploader pictureOfBookCoverImageUploader = new ImageUploader();
+        pictureOfBookCoverImageUploader.setWidth(100f, Unit.PERCENTAGE);
+        if (null != book.getPictureOfBookCover() &&
+                book.getPictureOfBookCover().isPresented()) {
+            pictureOfBookCoverImageUploader.setOutputStreamForImage(book.getPictureOfBookCover().getPictureOfBookCover());
+            pictureOfBookCoverImageUploader.resetProgressbar();
+            pictureOfBookCoverImageUploader.showImage();
+        }
+
+        VerticalLayout rightPanelWithDetails = new VerticalLayout();
+
+        bookDetailsFormLayout.addComponent(layoutForComponents);
+        return bookDetailsFormLayout;
     }
 
     private void logoutButtonClicked(Button.ClickEvent e) {

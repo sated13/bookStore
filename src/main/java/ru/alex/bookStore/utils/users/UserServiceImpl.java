@@ -3,13 +3,12 @@ package ru.alex.bookStore.utils.users;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.alex.bookStore.entities.User;
 import ru.alex.bookStore.entities.UserRole;
 import ru.alex.bookStore.repository.UserRepository;
-import ru.alex.bookStore.repository.RoleRepository;
+import ru.alex.bookStore.utils.roles.RoleService;
 
 import java.util.*;
 
@@ -19,22 +18,24 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+    @Autowired
+    private RoleService roleService;
 
     public UserServiceImpl() {
     }
 
     public boolean save(String username, String password, Set<UserRole> roles) {
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setRoles(roles);
-
         try {
-            userRepository.save(user);
-            return true;
+            if (null == findByUsername(username)) {
+                User user = new User();
+                user.setUsername(username);
+                user.setPassword(passwordEncoder.encode(password));
+                user.setRoles(roles);
+
+                userRepository.save(user);
+                return true;
+            } else return false;
         } catch (Exception e) {
             //ToDo: add logging
             return false;
@@ -88,7 +89,7 @@ public class UserServiceImpl implements UserService {
 
         try {
             User tempUser;
-            for (String username: userNames) {
+            for (String username : userNames) {
                 tempUser = findByUsername(username);
                 if (null != tempUser) {
                     users.add(tempUser);
@@ -122,14 +123,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean isAdmin(String userName) {
-        GrantedAuthority adminRole = roleRepository.findByAuthority("admin");
+        GrantedAuthority adminRole = roleService.findByRole("admin");
         User user = findByUsername(userName);
         return user.getRoles().contains(adminRole);
     }
 
     @Override
     public boolean isAdmin(User user) {
-        GrantedAuthority adminRole = roleRepository.findByAuthority("admin");
+        GrantedAuthority adminRole = roleService.findByRole("admin");
         return user.getRoles().contains(adminRole);
     }
 
@@ -140,11 +141,118 @@ public class UserServiceImpl implements UserService {
             userObject.setUsername(newUserName);
             userObject.setPassword(passwordEncoder.encode(password));
             userObject.setRoles(roles);
-
+            userRepository.save(userObject);
             return true;
         } catch (Exception e) {
             //ToDo: add logging
             return false;
         }
+    }
+
+    @Override
+    public Set<User> findUsersByRolesContains(UserRole role) {
+        try {
+            return userRepository.findUsersByRolesContains(role);
+        } catch (Exception e) {
+            //ToDo: add logging
+            return null;
+        }
+    }
+
+    @Override
+    public Map<UserRole, Set<User>> getUsersByRoles() {
+        Map<UserRole, Set<User>> resultMap = new HashMap<>();
+
+        try {
+            List<UserRole> roles = roleService.getAllRoles();
+            Set<User> setOfUsersForRole;
+
+            for (UserRole role : roles) {
+                setOfUsersForRole = findUsersByRolesContains(role);
+                resultMap.put(role, setOfUsersForRole);
+            }
+        }
+        catch (Exception e) {
+            //ToDo: add logging
+        }
+
+        return resultMap;
+    }
+
+    @Override
+    public Map<UserRole, Integer> getCountOfUsersByRoles() {
+        Map<UserRole, Integer> resultMap = new HashMap<>();
+
+        try {
+            List<UserRole> roles = roleService.getAllRoles();
+
+            for (UserRole role : roles) {
+                resultMap.put(role, userRepository.countBooksByRolesContains(role));
+            }
+        }
+        catch (Exception e) {
+            //ToDo: add logging
+        }
+
+        return resultMap;
+    }
+
+    @Override
+    public Integer countOfUsersWithRole(UserRole role) {
+        try {
+            return userRepository.countBooksByRolesContains(role);
+        }
+        catch (Exception e) {
+            //ToDo: add logging
+            return 0;
+        }
+    }
+
+    @Override
+    public long countUsers() {
+        try {
+            return userRepository.count();
+        } catch (Exception e) {
+            //ToDo: add logging
+            return 0;
+        }
+    }
+
+    @Override
+    public int addRoleToUsers(UserRole role, Set<User> users) {
+        int countOfChangedUsers = 0;
+
+        for (User user : users) {
+            try {
+                user.addRole(role);
+                userRepository.save(user);
+                countOfChangedUsers++;
+            } catch (Exception e) {
+                //ToDo: add logging
+            }
+        }
+
+        return countOfChangedUsers;
+    }
+
+    @Override
+    public int setRoleOnUsers(UserRole role, Set<User> users) {
+        int countOfChangedUsers = 0;
+        Set<User> usersWithRole = findUsersByRolesContains(role);
+
+        for (User user : usersWithRole) {
+            try {
+                if (!users.contains(user)) {
+                    user.deleteRole(role);
+                    userRepository.save(user);
+                    countOfChangedUsers++;
+                }
+            } catch (Exception e) {
+                //ToDo: add logging
+                e.printStackTrace(System.out);
+            }
+        }
+
+        return countOfChangedUsers;
     }
 }
