@@ -675,6 +675,7 @@ public class AdminUI extends BaseUI {
 
         ListSelect<String> listWithRoles = new ListSelect<>();
         listWithRoles.setWidth(100f, Unit.PERCENTAGE);
+        listWithRoles.setRequiredIndicatorVisible(true);
 
         Set<String> roles = (!userIsNull) ? user.getRoles().stream().map(UserRole::getAuthority).collect(Collectors.toSet()) : new HashSet<>();
         ListDataProvider<String> dataProvider = DataProvider.ofCollection(roles);
@@ -881,11 +882,17 @@ public class AdminUI extends BaseUI {
 
         TextField bookTitleTextField = new TextField("Title");
         bookTitleTextField.setWidth(100f, Unit.PERCENTAGE);
+        bookTitleTextField.setRequiredIndicatorVisible(true);
         if (!bookIsNull) bookTitleTextField.setValue(book.getBookTitle());
 
         TextField authorsTextField = new TextField("Authors");
         authorsTextField.setWidth(100f, Unit.PERCENTAGE);
+        authorsTextField.setRequiredIndicatorVisible(true);
         if (!bookIsNull) authorsTextField.setValue(StringUtils.collectionToDelimitedString(book.getAuthors(), ", "));
+
+        TextArea descriptionTextArea = new TextArea("Description");
+        descriptionTextArea.setWidth(100f, Unit.PERCENTAGE);
+        descriptionTextArea.setValue((!bookIsNull && !StringUtils.isEmpty(book.getDescription())) ? book.getDescription() : "");
 
         TextField numberOfPagesTextField = new TextField("Number of pages");
         numberOfPagesTextField.setWidth(100f, Unit.PERCENTAGE);
@@ -950,10 +957,9 @@ public class AdminUI extends BaseUI {
                 new BigDecimalRangeValidator("Value should have positive decimal format from 0 to 2000000",
                         BigDecimal.valueOf(0l), BigDecimal.valueOf(2000000l)), conversionService, BigDecimal.class);
 
-        leftPanel.addComponents(bookTitleTextField, authorsTextField, numberOfPagesTextField,
-                yearDateField, publishingHouseTextField, priceTextField, numberOfCopiesTextField,
-                addingDayDateField,
-                pictureOfBookCoverImageUploader);
+        leftPanel.addComponents(bookTitleTextField, authorsTextField, descriptionTextArea,
+                numberOfPagesTextField, yearDateField, publishingHouseTextField, priceTextField,
+                numberOfCopiesTextField, addingDayDateField, pictureOfBookCoverImageUploader);
         leftPanel.setDefaultComponentAlignment(Alignment.TOP_LEFT);
 
         //right panel
@@ -961,6 +967,7 @@ public class AdminUI extends BaseUI {
         ListSelect<String> listWithCategories = new ListSelect<>();
         listWithCategories.setWidth(100f, Unit.PERCENTAGE);
         listWithCategories.setHeight(100f, Unit.PERCENTAGE);
+        listWithCategories.setRequiredIndicatorVisible(true);
 
         Set<String> categories = (!bookIsNull) ? book.getCategories().stream().map(BookCategory::getCategory).collect(Collectors.toSet()) :
                 new HashSet<>();
@@ -1048,6 +1055,7 @@ public class AdminUI extends BaseUI {
 
             bookParameters.put("bookTitle", bookTitleTextField.getValue());
             bookParameters.put("authors", Arrays.stream(authorsTextField.getValue().split(",")).map(item -> item.trim()).collect(Collectors.toSet()));
+            bookParameters.put("description", descriptionTextArea.getValue());
             bookParameters.put("categories", categoryService.findByCategories(categories));
             bookParameters.put("numberOfPages", numberOfPagesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfPagesTextField.getValue(), Integer.class));
             bookParameters.put("year", (null != yearDateField.getValue()) ? (short) yearDateField.getValue().getYear() : (short) 0);

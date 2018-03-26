@@ -46,4 +46,6 @@ public interface BookService {
     int setCategoryOnBooks(BookCategory category, Set<Book> books);
 
     Set<Book> findTop10BooksOrderedByAddingDay();
+
+    Set<Book> findTop10BooksOrderedByCountOfSoldItems();
 }

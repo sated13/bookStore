@@ -7,7 +7,6 @@ import ru.alex.bookStore.entities.Book;
 import ru.alex.bookStore.entities.BookCategory;
 import ru.alex.bookStore.entities.Cover;
 import ru.alex.bookStore.repository.BookRepository;
-import ru.alex.bookStore.repository.CategoryRepository;
 import ru.alex.bookStore.utils.bookCategory.CategoryService;
 import ru.alex.bookStore.utils.cover.CoverService;
 
@@ -150,12 +149,11 @@ public class BookServiceImpl implements BookService {
     @Override
     public boolean changeBookDetails(Book book, Map<String, Object> bookParameters) {
         try {
-            Cover cover = book.getPictureOfBookCover();
             Cover newCover = setParameters(book, bookParameters);
 
             if (newCover.isPresented()) {
-                book.setPictureOfBookCover(cover);
-                coverService.save(cover);
+                book.setPictureOfBookCover(newCover);
+                coverService.save(newCover);
             }
             bookRepository.save(book);
             return true;
@@ -185,6 +183,16 @@ public class BookServiceImpl implements BookService {
         }
     }
 
+    @Override
+    public Set<Book> findTop10BooksOrderedByCountOfSoldItems() {
+        try {
+            return bookRepository.findTop10ByOrderByCountOfSoldItemsDesc();
+        } catch (Exception e) {
+            //ToDo: add logging
+            return null;
+        }
+    }
+
     private Cover setParameters(Book book, Map<String, Object> bookParameters) {
         Cover cover = new Cover();
 
@@ -196,6 +204,10 @@ public class BookServiceImpl implements BookService {
                 }
                 case "authors": {
                     book.setAuthors((Set<String>) bookParameters.get(key));
+                    break;
+                }
+                case "description": {
+                    book.setDescription((String) bookParameters.get(key));
                     break;
                 }
                 case "categories": {

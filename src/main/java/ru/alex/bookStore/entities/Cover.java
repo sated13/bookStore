@@ -1,12 +1,9 @@
 package ru.alex.bookStore.entities;
 
-import org.springframework.transaction.annotation.Transactional;
-
 import javax.persistence.*;
 
 @Entity
 @Table(name = "covers")
-//@Transactional
 public class Cover {
 
     @Id

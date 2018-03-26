@@ -10,7 +10,6 @@ import java.util.*;
 
 @Entity
 @Table(name = "books")
-//@Transactional
 public class Book implements Serializable {
 
     @Id
@@ -23,6 +22,8 @@ public class Book implements Serializable {
 
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> authors;
+
+    private String description;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "books_categories",
@@ -141,6 +142,14 @@ public class Book implements Serializable {
 
     public void setPictureOfBookCover(Cover pictureOfBookCover) {
         this.pictureOfBookCover = pictureOfBookCover;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @Override

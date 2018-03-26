@@ -18,4 +18,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     Integer countBooksByCategoriesContains(BookCategory category);
 
     Set<Book> findTop10ByOrderByAddingDayDesc();
+
+    Set<Book> findTop10ByOrderByCountOfSoldItemsDesc();
 }
