@@ -2,7 +2,6 @@ package ru.alex.bookStore.entities;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Set;
 
 @Entity
 @Table(name = "book_categories")

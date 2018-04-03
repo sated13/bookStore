@@ -1,13 +1,9 @@
 package ru.alex.bookStore.ui;
 
 import com.vaadin.data.Result;
-import com.vaadin.data.ValidationResult;
-import com.vaadin.data.Validator;
-import com.vaadin.data.ValueContext;
 import com.vaadin.data.provider.DataProvider;
 import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.data.validator.*;
-import com.vaadin.server.UserError;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.ui.datefield.DateResolution;
 import com.vaadin.spring.annotation.SpringUI;
@@ -18,7 +14,6 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import ru.alex.bookStore.entities.*;
-import ru.alex.bookStore.repository.BookRepository;
 import ru.alex.bookStore.utils.ui.ComponentValueValidation;
 import ru.alex.bookStore.utils.book.BookService;
 import ru.alex.bookStore.utils.bookCategory.CategoryService;
@@ -50,6 +45,7 @@ public class AdminUI extends BaseUI {
     ConversionService conversionService;
 
     Button logoutButtonBase = new Button("Logout", this::logoutButtonClicked);
+    Button logConfigButtonBase = new Button("Log configuration", this::logConfigurationButtonClicked);
     VerticalLayout globalPanel = new VerticalLayout();
     HorizontalSplitPanel createAndShowAllItemsPanel = new HorizontalSplitPanel();
     VerticalLayout leftPanel = new VerticalLayout();
@@ -80,6 +76,10 @@ public class AdminUI extends BaseUI {
 
         globalPanel.addComponent(menuBar);
         globalPanel.setComponentAlignment(menuBar, Alignment.TOP_CENTER);
+
+        logConfigButtonBase.setStyleName(ValoTheme.BUTTON_LINK);
+        horizontalPanelForButtons.addComponent(logConfigButtonBase);
+        horizontalPanelSize += logConfigButtonBase.getWidth();
 
         logoutButtonBase.setStyleName(ValoTheme.BUTTON_LINK);
         horizontalPanelForButtons.addComponent(logoutButtonBase);
@@ -160,6 +160,11 @@ public class AdminUI extends BaseUI {
         SecurityContextHolder.clearContext();
         //redirect to login page
         getPage().setLocation("/main?logout");
+    }
+
+    private void logConfigurationButtonClicked(Button.ClickEvent e) {
+        //redirect to log configuration page
+        getPage().setLocation("/logConfigurator");
     }
 
     private void addCreateAndShowAllItemsPanelOnGlobalPanel() {

@@ -1,5 +1,6 @@
 package ru.alex.bookStore.utils.book;
 
+import org.apache.log4j.BasicConfigurator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,9 @@ import ru.alex.bookStore.entities.Cover;
 import ru.alex.bookStore.repository.BookRepository;
 import ru.alex.bookStore.utils.bookCategory.CategoryService;
 import ru.alex.bookStore.utils.cover.CoverService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,11 +29,15 @@ public class BookServiceImpl implements BookService {
     @Autowired
     CategoryService categoryService;
 
+    final Logger logger = LoggerFactory.getLogger(BookServiceImpl.class);
+
     @Override
     public boolean save(Map<String, Object> bookParameters) {
         Book newBook = new Book();
         Cover cover = setParameters(newBook, bookParameters);
-
+        //BasicConfigurator.configure();
+        logger.info("test string");
+        logger.debug("save Book method, bookParameters: {}", bookParameters);
         try {
             newBook.setPictureOfBookCover(cover);
             newBook.setAddingDay(LocalDate.now());

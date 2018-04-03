@@ -13,6 +13,7 @@ import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import ru.alex.bookStore.utils.LogService;
 import ru.alex.bookStore.utils.users.ActiveUserRepository;
 
 @Configuration
@@ -25,7 +26,7 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
-                .exceptionHandling().authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))//.accessDeniedPage("/accessDenied")
+                .exceptionHandling().authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login")).accessDeniedPage("/accessDenied")
                 .and()
                 .authorizeRequests()
                 .antMatchers("/VAADIN/**", "/PUSH/**", "/login",
@@ -33,7 +34,7 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                         "/vaadinServlet/**", "/h2-console", "/h2-console/**",
                         "/register", "/main")
                 .permitAll()
-                .antMatchers("/adminPanel", "/adminPanel/**").hasAuthority("admin")
+                .antMatchers("/adminPanel", "/adminPanel/**", "/logConfigurator", "/logConfigurator/**").hasAuthority("admin")
                 .antMatchers("/**").fullyAuthenticated()
                 .and()
                 .logout().permitAll();
@@ -61,4 +62,9 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     public ActiveUserRepository activeUserRepository() {
         return new ActiveUserRepository();
     }
+
+    /*@Bean
+    public LogService logService() {
+        return new LogService();
+    }*/
 }
