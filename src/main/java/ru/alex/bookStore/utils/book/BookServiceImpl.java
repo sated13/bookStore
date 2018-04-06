@@ -1,6 +1,5 @@
 package ru.alex.bookStore.utils.book;
 
-import org.apache.log4j.BasicConfigurator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -29,7 +28,7 @@ public class BookServiceImpl implements BookService {
     @Autowired
     CategoryService categoryService;
 
-    final Logger logger = LoggerFactory.getLogger(BookServiceImpl.class);
+    private Logger logger = LoggerFactory.getLogger(BookServiceImpl.class);
 
     @Override
     public boolean save(Map<String, Object> bookParameters) {

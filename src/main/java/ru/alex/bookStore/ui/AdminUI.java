@@ -1,9 +1,13 @@
 package ru.alex.bookStore.ui;
 
+import com.google.gwt.layout.client.Layout;
 import com.vaadin.data.Result;
 import com.vaadin.data.provider.DataProvider;
 import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.data.validator.*;
+import com.vaadin.event.LayoutEvents;
+import com.vaadin.event.MouseEvents;
+import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.ui.datefield.DateResolution;
 import com.vaadin.spring.annotation.SpringUI;
@@ -209,7 +213,7 @@ public class AdminUI extends BaseUI {
 
         User user = userService.findByUsername(selectedUser);
 
-        FormLayout userDetailsLayout = createLayoutForUserParameters(user, "Save",
+        FormLayout userDetailsLayout = createLayoutForUserParameters(user, "Save", false,
                 (user1, username, password, roles) -> {
 
                     Window confirmDialogWindow = new YesNoDialog("Confirmation",
@@ -218,7 +222,7 @@ public class AdminUI extends BaseUI {
                             resultIsYes -> {
                                 if (resultIsYes) {
                                     boolean resultOfOperation = userService.changeUserDetails(user1.getUsername(), usernameField.getValue(),
-                                            passwordField.getValue(), roles);
+                                            passwordFieldRegistration.getValue(), roles);
 
                                     Notification.show("Changes for user \"" + usernameField.getValue() +
                                                     ((resultOfOperation) ? "\" were saved." : " weren't saved."),
@@ -466,10 +470,10 @@ public class AdminUI extends BaseUI {
     private void createUserButtonClick(Button.ClickEvent e) {
         Window createUserWindow = new Window("Create user");
 
-        FormLayout createUserLayout = createLayoutForUserParameters(null, "Create",
+        FormLayout createUserLayout = createLayoutForUserParameters(null, "Create", true,
                 (user, username, password, roles) -> {
                     boolean resultOfOperation = userService.save(usernameField.getValue(),
-                            passwordField.getValue(), roles);
+                            passwordFieldRegistration.getValue(), roles);
 
                     Notification.show("User \"" + usernameField.getValue() + "\" with roles \"" +
                                     StringUtils.collectionToDelimitedString(roles, ", ") +
@@ -657,7 +661,7 @@ public class AdminUI extends BaseUI {
         addWindow(confirmDialogWindow);
     }
 
-    private FormLayout createLayoutForUserParameters(User user, String buttonCaption, UserButtonClick userButtonClickImpl) {
+    private FormLayout createLayoutForUserParameters(User user, String buttonCaption, boolean isUserCreation, UserButtonClick userButtonClickImpl) {
         FormLayout userDetailsLayout = new FormLayout();
 
         HorizontalSplitPanel horizontalPanel = new HorizontalSplitPanel();
@@ -670,10 +674,10 @@ public class AdminUI extends BaseUI {
 
         usernameField.setValue((!userIsNull) ? user.getUsername() : "");
 
-        passwordField.setValue("");
+        passwordFieldRegistration.setValue("");
         confirmPasswordField.setValue("");
 
-        leftPanelUser.addComponents(usernameField, passwordField, confirmPasswordField);
+        leftPanelUser.addComponents(usernameField, passwordFieldRegistration, confirmPasswordField);
         leftPanelUser.setDefaultComponentAlignment(Alignment.TOP_LEFT);
 
         //right panel
@@ -695,8 +699,8 @@ public class AdminUI extends BaseUI {
                     StringUtils.isEmpty(usernameField.getValue()),
                     "Username can't be empty");
 
-            resultOfValidation = resultOfValidation || ComponentValueValidation.addErrorOnComponent(passwordField,
-                    StringUtils.isEmpty(passwordField.getValue()),
+            resultOfValidation = resultOfValidation || ComponentValueValidation.addErrorOnComponent(passwordFieldRegistration,
+                    isUserCreation && StringUtils.isEmpty(passwordFieldRegistration.getValue()),
                     "Password can't be empty");
 
             resultOfValidation = resultOfValidation || ComponentValueValidation.addErrorOnComponent(listWithRoles,
@@ -704,8 +708,8 @@ public class AdminUI extends BaseUI {
                     "Should be presented 1 role at least");
 
             resultOfValidation = resultOfValidation || ComponentValueValidation.addErrorOnComponent(confirmPasswordField,
-                    null != passwordField.getValue() &&
-                            !passwordField.getValue().equals(confirmPasswordField.getValue()),
+                    null != passwordFieldRegistration.getValue() &&
+                            !passwordFieldRegistration.getValue().equals(confirmPasswordField.getValue()),
                     "Passwords should be equal");
 
             if (resultOfValidation) {
@@ -713,7 +717,7 @@ public class AdminUI extends BaseUI {
                 return;
             }
 
-            userButtonClickImpl.doAction(user, usernameField.getValue(), passwordField.getValue(), roleService.findByRoles(roles));
+            userButtonClickImpl.doAction(user, usernameField.getValue(), passwordFieldRegistration.getValue(), roleService.findByRoles(roles));
         });
 
         Button addRolesButton = new Button("Add roles");
@@ -727,16 +731,22 @@ public class AdminUI extends BaseUI {
 
             ListSelect<String> listWithAllRoles = new ListSelect<>();
             listWithAllRoles.setSizeFull();
-            listWithAllRoles.setItems(new HashSet<>(roleService.getAllStringRoles()));
 
-            Button addButton = new Button("Add", ev -> {
+            Set<String> setWithAbsentRolesInList = new HashSet<>(roleService.getAllStringRoles());
+            setWithAbsentRolesInList.removeAll(roles);
+
+            listWithAllRoles.setItems(setWithAbsentRolesInList);
+
+            /*Button addButton = new Button("Add", ev -> {
                 if (!listWithAllRoles.getSelectedItems().isEmpty()) {
                     roles.addAll(listWithAllRoles.getSelectedItems());
                     dataProvider.refreshAll();
 
                     allRolesWindow.close();
                 }
-            });
+            });*/
+
+            Button addButton = new Button("Add", ev -> addButtonClick(listWithAllRoles, roles, dataProvider, allRolesWindow));
 
             Button cancelButton = new Button("Cancel", ev -> allRolesWindow.close());
 
@@ -745,19 +755,23 @@ public class AdminUI extends BaseUI {
             layout.addComponents(listWithAllRoles, horizontalLayout);
             layout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
 
+            layout.addLayoutClickListener(eve -> layoutClickListener(eve, addButton));
+
             allRolesWindow.setContent(layout);
             allRolesWindow.center();
             allRolesWindow.setModal(true);
             addWindow(allRolesWindow);
         });
 
-        deleteRolesButton.addClickListener(event -> {
+        /*deleteRolesButton.addClickListener(event -> {
             Set<String> setWithSelectedRoles = listWithRoles.getSelectedItems();
             if (!setWithSelectedRoles.isEmpty()) {
                 roles.removeAll(setWithSelectedRoles);
                 dataProvider.refreshAll();
             }
-        });
+        });*/
+
+        deleteRolesButton.addClickListener(event -> deleteButtonClick(listWithRoles, roles, dataProvider));
 
         rightPanelUser.addComponents(new Label(rolesCaption), listWithRoles, addRolesButton, deleteRolesButton);
         rightPanelUser.setDefaultComponentAlignment(Alignment.TOP_LEFT);
@@ -823,16 +837,22 @@ public class AdminUI extends BaseUI {
 
             ListSelect<String> listWithAllUsers = new ListSelect<>();
             listWithAllUsers.setSizeFull();
-            listWithAllUsers.setItems(new HashSet<>(userService.getAllUserNames()));
 
-            Button addButton = new Button("Add", ev -> {
+            Set<String> setWithAbsentUsersInList = new HashSet<>(userService.getAllUserNames());
+            setWithAbsentUsersInList.removeAll(users);
+
+            listWithAllUsers.setItems(setWithAbsentUsersInList);
+
+            /*Button addButton = new Button("Add", ev -> {
                 if (!listWithAllUsers.getSelectedItems().isEmpty()) {
                     users.addAll(listWithAllUsers.getSelectedItems());
                     dataProvider.refreshAll();
 
                     allUsersWindow.close();
                 }
-            });
+            });*/
+
+            Button addButton = new Button("Add", ev -> addButtonClick(listWithAllUsers, users, dataProvider, allUsersWindow));
 
             Button cancelButton = new Button("Cancel", ev -> allUsersWindow.close());
 
@@ -841,19 +861,23 @@ public class AdminUI extends BaseUI {
             layout.addComponents(listWithAllUsers, horizontalLayout);
             layout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
 
+            layout.addLayoutClickListener(eve -> layoutClickListener(eve, addButton));
+
             allUsersWindow.setContent(layout);
             allUsersWindow.center();
             allUsersWindow.setModal(true);
             addWindow(allUsersWindow);
         });
 
-        deleteUsersButton.addClickListener(event -> {
+        /*deleteUsersButton.addClickListener(event -> {
             Set<String> setWithSelectedCategories = listWithUsers.getSelectedItems();
             if (!setWithSelectedCategories.isEmpty()) {
                 users.removeAll(setWithSelectedCategories);
                 dataProvider.refreshAll();
             }
-        });
+        });*/
+
+        deleteUsersButton.addClickListener(event -> deleteButtonClick(listWithUsers, users, dataProvider));
 
         rightPanelRole.addComponents(new Label(usersCaption), listWithUsers, addUsersButton, deleteUsersButton);
         rightPanelRole.setDefaultComponentAlignment(Alignment.TOP_LEFT);
@@ -991,15 +1015,20 @@ public class AdminUI extends BaseUI {
 
             ListSelect<String> listWithAllCategories = new ListSelect<>();
             listWithAllCategories.setSizeFull();
-            listWithAllCategories.setItems(new HashSet<>(categoryService.getAllStringCategories()));
+            Set<String> setWithAbsentCategoriesInList = new HashSet<>(categoryService.getAllStringCategories());
+            setWithAbsentCategoriesInList.removeAll(categories);
 
-            Button addButton = new Button("Add", ev -> {
+            listWithAllCategories.setItems(setWithAbsentCategoriesInList);
+
+            /*Button addButton = new Button("Add", ev -> {
                 if (!listWithAllCategories.getSelectedItems().isEmpty()) {
                     categories.addAll(listWithAllCategories.getSelectedItems());
                     dataProvider.refreshAll();
                     allCategoriesWindow.close();
                 }
-            });
+            });*/
+
+            Button addButton = new Button("Add", ev -> addButtonClick(listWithAllCategories, categories, dataProvider, allCategoriesWindow));
 
             Button cancelButton = new Button("Cancel", ev -> allCategoriesWindow.close());
 
@@ -1008,19 +1037,23 @@ public class AdminUI extends BaseUI {
             layout.addComponents(listWithAllCategories, horizontalLayout);
             layout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
 
+            layout.addLayoutClickListener(eve -> layoutClickListener(eve, addButton));
+
             allCategoriesWindow.setContent(layout);
             allCategoriesWindow.center();
             allCategoriesWindow.setModal(true);
             addWindow(allCategoriesWindow);
         });
 
-        deleteCategoriesButton.addClickListener(event -> {
+        /*deleteCategoriesButton.addClickListener(event -> {
             Set<String> setWithSelectedCategories = listWithCategories.getSelectedItems();
             if (!setWithSelectedCategories.isEmpty()) {
                 categories.removeAll(setWithSelectedCategories);
                 dataProvider.refreshAll();
             }
-        });
+        });*/
+
+        deleteCategoriesButton.addClickListener(event -> deleteButtonClick(listWithCategories, categories, dataProvider));
 
         rightPanelCreateBook.addComponents(new Label("Choose book categories"), listWithCategories,
                 addCategoriesButton, deleteCategoriesButton);
@@ -1135,7 +1168,11 @@ public class AdminUI extends BaseUI {
 
             ListSelect<Book> listWithAllBooks = new ListSelect<>();
             listWithAllBooks.setSizeFull();
-            listWithAllBooks.setItems(new HashSet<>(bookService.getAllBooks()));
+
+            Set<Book> setWithAbsentBooksInList = new HashSet<>(bookService.getAllBooks());
+            setWithAbsentBooksInList.removeAll(books);
+
+            listWithAllBooks.setItems(setWithAbsentBooksInList);
 
             Button addButton = new Button("Add", ev -> {
                 if (!listWithAllBooks.getSelectedItems().isEmpty()) {
@@ -1152,6 +1189,8 @@ public class AdminUI extends BaseUI {
 
             layout.addComponents(listWithAllBooks, horizontalLayout);
             layout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+
+            layout.addLayoutClickListener(eve -> layoutClickListener(eve, addButton));
 
             allBooksWindow.setContent(layout);
             allBooksWindow.center();
@@ -1175,6 +1214,32 @@ public class AdminUI extends BaseUI {
         categoryDetailsLayout.addComponents(horizontalPanel, actionButton);
 
         return categoryDetailsLayout;
+    }
+
+    private void addButtonClick(ListSelect<String> listWithItems, Set<String> items, ListDataProvider<String> dataProvider, Window popupWindow) {
+        if (!listWithItems.getSelectedItems().isEmpty()) {
+            items.addAll(listWithItems.getSelectedItems());
+            dataProvider.refreshAll();
+
+            popupWindow.close();
+        }
+    }
+
+    private void deleteButtonClick(ListSelect<String > listWithItems, Set<String> items, ListDataProvider<String> dataProvider) {
+        Set<String> setWithSelectedItems = listWithItems.getSelectedItems();
+        if (!setWithSelectedItems.isEmpty()) {
+            items.removeAll(setWithSelectedItems);
+            dataProvider.refreshAll();
+        }
+    }
+
+    private void layoutClickListener(LayoutEvents.LayoutClickEvent event, Button addButton) {
+        if (event.getMouseEventDetails().isDoubleClick()) {
+            Component clickedComponent = event.getClickedComponent();
+            if (ListSelect.class.equals(event.getClickedComponent().getClass()) && ((ListSelect) clickedComponent).getSelectedItems().size() == 1) {
+                addButton.click();
+            }
+        }
     }
 
     private interface BookButtonClick {

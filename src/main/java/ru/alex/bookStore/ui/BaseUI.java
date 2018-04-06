@@ -1,7 +1,10 @@
 package ru.alex.bookStore.ui;
 
+import com.vaadin.event.ShortcutAction;
+import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.ui.*;
+import javafx.scene.input.KeyCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,7 +37,8 @@ public class BaseUI extends UI {
     Button resisterOnAuthorizationUIButton = new Button("Register", this::resisterOnAuthorizationUIButtonClick);
 
     TextField usernameField = new TextField("Login", "");
-    PasswordField passwordField = new PasswordField("Password", "");
+    PasswordField passwordFieldAuthorization = new PasswordField("Password", "");
+    PasswordField passwordFieldRegistration = new PasswordField("Password", "");
     PasswordField confirmPasswordField = new PasswordField("Confirm password", "");
     protected VaadinRequest localVaadinRequest;
     private Boolean authorizationUIFlag = false;
@@ -64,7 +68,16 @@ public class BaseUI extends UI {
     private AbstractOrderedLayout createAuthorizationForm() {
         FormLayout components = new FormLayout();
         components.addComponent(usernameField);
-        components.addComponent(passwordField);
+        components.addComponent(passwordFieldAuthorization);
+
+        if (passwordFieldAuthorization.getListeners(ShortcutListener.class).isEmpty()) {
+            passwordFieldAuthorization.addShortcutListener(new ShortcutListener("Enter", ShortcutAction.KeyCode.ENTER, null) {
+                @Override
+                public void handleAction(Object sender, Object target) {
+                    loginButton.click();
+                }
+            });
+        }
 
         HorizontalLayout horizontalPanelForButtons = new HorizontalLayout();
 
@@ -96,8 +109,18 @@ public class BaseUI extends UI {
         FormLayout components = new FormLayout();
 
         components.addComponent(usernameField);
-        components.addComponent(passwordField);
+        components.addComponent(passwordFieldRegistration);
         components.addComponent(confirmPasswordField);
+
+        if (confirmPasswordField.getListeners(ShortcutListener.class).isEmpty()) {
+            confirmPasswordField.addShortcutListener(new ShortcutListener("Enter", ShortcutAction.KeyCode.ENTER, null) {
+                @Override
+                public void handleAction(Object sender, Object target) {
+                    registerButton.click();
+                }
+            });
+        }
+
         components.addComponent(registerButton);
         components.setSizeUndefined();
 
@@ -126,8 +149,8 @@ public class BaseUI extends UI {
             UserDetails userDetails = userDetailsService.loadUserByUsername(usernameField.getValue());
             UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken;
 
-            if (userService.passwordIsCorrect(passwordField.getValue(), userDetails.getPassword())) {
-                usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(usernameField.getValue(), passwordField.getValue(), userDetails.getAuthorities());
+            if (userService.passwordIsCorrect(passwordFieldAuthorization.getValue(), userDetails.getPassword())) {
+                usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(usernameField.getValue(), passwordFieldAuthorization.getValue(), userDetails.getAuthorities());
                 authenticationManager.authenticate(usernamePasswordAuthenticationToken);
 
                 if (usernamePasswordAuthenticationToken.isAuthenticated()) {
@@ -148,13 +171,13 @@ public class BaseUI extends UI {
 
     protected void registerButtonClick(Button.ClickEvent e) {
 
-        if (null != passwordField.getValue() && passwordField.getValue().equals(confirmPasswordField.getValue())) {
+        if (null != passwordFieldRegistration.getValue() && passwordFieldRegistration.getValue().equals(confirmPasswordField.getValue())) {
             UserRole customerUserRole = roleService.findByRole(customerRole);
             Set<UserRole> roles = new HashSet<>();
             roles.add(customerUserRole);
 
-            userService.save(usernameField.getValue(), passwordField.getValue(), roles);
-            securityService.autoLogin(usernameField.getValue(), passwordField.getValue());
+            userService.save(usernameField.getValue(), passwordFieldRegistration.getValue(), roles);
+            securityService.autoLogin(usernameField.getValue(), passwordFieldRegistration.getValue());
 
             //redirect to main page
             getPage().setLocation("/main");

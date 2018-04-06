@@ -23,6 +23,14 @@ public class LogConfiguratorUI extends UI {
 
         FormLayout contentLayout = new FormLayout();
 
+        HorizontalLayout horizontalPanelForButtons = new HorizontalLayout();
+        horizontalPanelForButtons.setStyleName(ValoTheme.LAYOUT_WELL);
+
+        Button adminPanelButton = new Button("Admin Panel", this::adminPanelButtonClicked);
+
+        adminPanelButton.setStyleName(ValoTheme.BUTTON_LINK);
+        horizontalPanelForButtons.addComponent(adminPanelButton);
+
         Label pathToLogConfigFile = new Label("Path to log config file: " + logService.getLogConfigFilePath());
         componentsHeight += pathToLogConfigFile.getHeight();
 
@@ -39,11 +47,9 @@ public class LogConfiguratorUI extends UI {
 
         logConfigurationTextArea.setValue(logService.getLogConfiguration());
 
-        contentLayout.setDefaultComponentAlignment(Alignment.TOP_LEFT);
+        contentLayout.addComponents(horizontalPanelForButtons, pathToLogConfigFile, loadLogConfigurationButton, logConfigurationLabel, logConfigurationTextArea);
 
-        contentLayout.addComponents(pathToLogConfigFile, loadLogConfigurationButton, logConfigurationLabel, logConfigurationTextArea);
         contentLayout.setSizeFull();
-        contentLayout.setStyleName(ValoTheme.LAYOUT_CARD);
 
         contentWindow.setContent(contentLayout);
         contentWindow.setClosable(false);
@@ -56,5 +62,10 @@ public class LogConfiguratorUI extends UI {
     private void loadLogConfiguration(Button.ClickEvent event) {
         logService.updateLogConfiguration();
         Page.getCurrent().reload();
+    }
+
+    private void adminPanelButtonClicked(Button.ClickEvent e) {
+        //redirect to admin panel page
+        getPage().setLocation("/adminPanel");
     }
 }
