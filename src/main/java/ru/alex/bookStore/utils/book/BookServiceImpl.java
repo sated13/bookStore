@@ -234,7 +234,7 @@ public class BookServiceImpl implements BookService {
                     break;
                 }
                 case "price": {
-                    book.setPrice((BigDecimal) bookParameters.get(key));
+                    book.setPrice((double) bookParameters.get(key));
                     break;
                 }
                 case "numberOfCopies": {

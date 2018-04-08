@@ -122,6 +122,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public String encryptPassword(String plainPassword) {
+        return passwordEncoder.encode(plainPassword);
+    }
+
+    @Override
     public boolean isAdmin(String userName) {
         GrantedAuthority adminRole = roleService.findByRole("admin");
         User user = findByUsername(userName);

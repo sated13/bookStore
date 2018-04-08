@@ -7,6 +7,7 @@ import com.vaadin.ui.*;
 import javafx.scene.input.KeyCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -150,8 +151,13 @@ public class BaseUI extends UI {
             UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken;
 
             if (userService.passwordIsCorrect(passwordFieldAuthorization.getValue(), userDetails.getPassword())) {
-                usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(usernameField.getValue(), passwordFieldAuthorization.getValue(), userDetails.getAuthorities());
+                usernamePasswordAuthenticationToken =
+                        new UsernamePasswordAuthenticationToken(usernameField.getValue(),
+                                passwordFieldAuthorization.getValue(),
+                                userDetails.getAuthorities());
+
                 authenticationManager.authenticate(usernamePasswordAuthenticationToken);
+                usernamePasswordAuthenticationToken.eraseCredentials();
 
                 if (usernamePasswordAuthenticationToken.isAuthenticated()) {
                     SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);

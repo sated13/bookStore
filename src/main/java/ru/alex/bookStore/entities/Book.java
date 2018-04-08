@@ -33,7 +33,7 @@ public class Book implements Serializable {
     private Integer numberOfPages = 0;
     private Short year = 0;
     private String publishingHouse = "";
-    private BigDecimal price = new BigDecimal(0);
+    private double price = 0.0;
     private Integer numberOfCopies = 0;
     private Integer countOfSoldItems = 0;
     private LocalDate addingDay;
@@ -68,7 +68,7 @@ public class Book implements Serializable {
         return publishingHouse;
     }
 
-    public BigDecimal getPrice() {
+    public double getPrice() {
         return price;
     }
 
@@ -116,7 +116,7 @@ public class Book implements Serializable {
         this.publishingHouse = publishingHouse;
     }
 
-    public void setPrice(BigDecimal price) {
+    public void setPrice(double price) {
         this.price = price;
     }
 

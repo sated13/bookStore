@@ -2,6 +2,7 @@ package ru.alex.bookStore.utils.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionRegistry;
@@ -41,7 +42,9 @@ public class SecurityServiceImpl implements SecurityService {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());
 
+            //((ProviderManager) authenticationManager).setEraseCredentialsAfterAuthentication(true);
             authenticationManager.authenticate(usernamePasswordAuthenticationToken);
+            usernamePasswordAuthenticationToken.eraseCredentials();
 
             if (usernamePasswordAuthenticationToken.isAuthenticated()) {
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);

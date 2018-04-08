@@ -1,6 +1,5 @@
 package ru.alex.bookStore.ui;
 
-import com.google.gwt.layout.client.Layout;
 import com.vaadin.data.Result;
 import com.vaadin.data.provider.DataProvider;
 import com.vaadin.data.provider.ListDataProvider;
@@ -75,6 +74,7 @@ public class AdminUI extends BaseUI {
         createAndShowAllItemsPanel.setHeight(100f, Unit.PERCENTAGE);
         createAndShowAllItemsPanel.setSplitPosition(30f, Unit.PERCENTAGE);
 
+        globalPanel.setSpacing(false);
         globalPanel.addComponent(horizontalPanelForButtons);
         globalPanel.setComponentAlignment(horizontalPanelForButtons, Alignment.TOP_RIGHT);
 

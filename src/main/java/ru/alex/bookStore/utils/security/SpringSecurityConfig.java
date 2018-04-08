@@ -31,10 +31,10 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/VAADIN/**", "/PUSH/**", "/login",
                         "/login/**", "/error/**", "/accessDenied/**",
-                        "/vaadinServlet/**", "/h2-console", "/h2-console/**",
-                        "/register", "/main")
+                        "/vaadinServlet/**", "/register", "/main")
                 .permitAll()
-                .antMatchers("/adminPanel", "/adminPanel/**", "/logConfigurator", "/logConfigurator/**").hasAuthority("admin")
+                .antMatchers("/adminPanel", "/adminPanel/**", "/logConfigurator",
+                        "/logConfigurator/**", "/h2-console", "/h2-console/**").hasAuthority("admin")
                 .antMatchers("/**").fullyAuthenticated()
                 .and()
                 .logout().permitAll();

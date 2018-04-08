@@ -35,6 +35,8 @@ public interface UserService {
 
     boolean passwordIsCorrect(String password, String hashedPassword);
 
+    String encryptPassword(String plainPassword);
+
     boolean isAdmin(String username);
 
     boolean isAdmin(User user);

@@ -1,0 +1,38 @@
+@import "variables";
+@import "../valo/valo";
+
+.fixed-valo {
+    @include valo;
+
+    .v-formlayout {
+        border: 1px solid #859694;
+        border-radius: 7px;
+    }
+
+    .v-horizontallayout {
+        background-color: rgba(0, 0, 0, 0.71);
+    }
+
+    .v-menubar-popup{
+        background-color: rgba(0, 0, 0, 0.71);
+    }
+
+    .v-menubar-menuitem-caption {
+        color: #197de1;
+        text-decoration: underline;
+    }
+
+    .v-menubar > .v-menubar-menuitem-selected {
+        background-image: none;
+        background-color: transparent;
+    }
+
+    .v-menubar-menuitem.v-menubar-menuitem-selected {
+        background-image: none;
+        background-color: transparent;
+    }
+
+    div.v-formlayout.v-layout.v-widget.v-has-width {
+        background-color: #f8f8f8;
+    }
+}
