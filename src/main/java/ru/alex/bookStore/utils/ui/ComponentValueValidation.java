@@ -25,7 +25,7 @@ public class ComponentValueValidation {
                 }
             }
             catch (Exception e) {
-                e.printStackTrace(System.out);
+                e.printStackTrace();
                 UserError error = new UserError("Wrong value");
                 field.setComponentError(error);
             }

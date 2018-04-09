@@ -5,8 +5,6 @@ import com.vaadin.data.provider.DataProvider;
 import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.data.validator.*;
 import com.vaadin.event.LayoutEvents;
-import com.vaadin.event.MouseEvents;
-import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.shared.ui.datefield.DateResolution;
 import com.vaadin.spring.annotation.SpringUI;
@@ -932,7 +930,7 @@ public class AdminUI extends BaseUI {
         if (!bookIsNull && !StringUtils.isEmpty(book.getPublishingHouse()))
             publishingHouseTextField.setValue(book.getPublishingHouse());
 
-        TextField priceTextField = new TextField("Price");
+        TextField priceTextField = new TextField("Price, $");
         priceTextField.setWidth(100f, Unit.PERCENTAGE);
 
         TextField numberOfCopiesTextField = new TextField("Number of copies");
@@ -974,6 +972,7 @@ public class AdminUI extends BaseUI {
         if (!bookIsNull && null != book.getPictureOfBookCover() &&
                 book.getPictureOfBookCover().isPresented()) {
             pictureOfBookCoverImageUploader.setOutputStreamForImage(book.getPictureOfBookCover().getPictureOfBookCover());
+            pictureOfBookCoverImageUploader.setFilename(book.getPictureOfBookCover().getFilename());
             pictureOfBookCoverImageUploader.resetProgressbar();
             pictureOfBookCoverImageUploader.showImage();
         }
@@ -1098,7 +1097,7 @@ public class AdminUI extends BaseUI {
             bookParameters.put("numberOfPages", numberOfPagesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfPagesTextField.getValue(), Integer.class));
             bookParameters.put("year", (null != yearDateField.getValue()) ? (short) yearDateField.getValue().getYear() : (short) 0);
             bookParameters.put("publishingHouse", publishingHouseTextField.getValue());
-            bookParameters.put("price", priceTextField.getValue().isEmpty() ? BigDecimal.ZERO : conversionService.convert(priceTextField.getValue(), BigDecimal.class));
+            bookParameters.put("price", priceTextField.getValue().isEmpty() ? 0.0 : conversionService.convert(priceTextField.getValue(), Double.class));
             bookParameters.put("numberOfCopies", numberOfCopiesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfCopiesTextField.getValue(), Integer.class));
 
             if (pictureOfBookCoverImageUploader.getOutputStreamForImage().size() > 0) {

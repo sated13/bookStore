@@ -14,20 +14,6 @@ public class CoverServiceImpl implements CoverService {
     CoverRepository coverRepository;
 
     @Override
-    public boolean save(byte[] coverArray) {
-        try {
-            Cover cover = new Cover(coverArray);
-            coverRepository.save(cover);
-            return true;
-        }
-        catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace(System.out);
-            return false;
-        }
-    }
-
-    @Override
     public boolean save(Cover cover) {
         try {
             coverRepository.save(cover);
@@ -35,7 +21,7 @@ public class CoverServiceImpl implements CoverService {
         }
         catch (Exception e) {
             //ToDo: add logging
-            e.printStackTrace(System.out);
+            e.printStackTrace();
             return false;
         }
     }
@@ -43,5 +29,14 @@ public class CoverServiceImpl implements CoverService {
     @Override
     public boolean delete(byte[] cover) {
         return false;
+    }
+
+    public Cover createEmptyCover() {
+        return new Cover();
+    }
+
+    @Override
+    public void setBookId(Cover cover, Long bookId) {
+        cover.setFilename(bookId);
     }
 }

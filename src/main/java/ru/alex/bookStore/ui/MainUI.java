@@ -64,6 +64,7 @@ public class MainUI extends BaseUI {
         HorizontalLayout horizontalPanelForButtons = new HorizontalLayout();
         horizontalPanelForButtons.setSpacing(false);
         horizontalPanelForButtons.setDefaultComponentAlignment(Alignment.TOP_RIGHT);
+
         //horizontalPanelForButtons.setStyleName(ValoTheme.LAYOUT_WELL);
 
         loginButtonBase.setStyleName(ValoTheme.BUTTON_LINK);
@@ -73,6 +74,7 @@ public class MainUI extends BaseUI {
 
         shoppingBasketButton.addClickListener(this::shoppingBasketButtonClick);
         shoppingBasketButton.setStyleName(ValoTheme.BUTTON_LINK);
+        setShoppingBasketButtonCaption(getCurrentLoggedInUser());
 
         if (!isAnonymousUser) {
             if (doesUserHaveAdminRole(stringUsername)) {
@@ -96,6 +98,7 @@ public class MainUI extends BaseUI {
 
         HorizontalLayout menuLayout = new HorizontalLayout();
         menuLayout.setWidth(100f, Unit.PERCENTAGE);
+        menuLayout.addStyleName("for-second-top-level");
 
         MenuBar menuBar = new MenuBar();
         menuBar.setStyleName(ValoTheme.MENUBAR_BORDERLESS);
@@ -113,12 +116,7 @@ public class MainUI extends BaseUI {
         List<BookCategory> allBookCategories = categoryRepository.findAll();
 
         for (BookCategory bookCategory : allBookCategories) {
-            categoriesMenuItem.addItem(bookCategory.getCategory(), null, new MenuBar.Command() {
-                @Override
-                public void menuSelected(MenuBar.MenuItem selectedItem) {
-                    categoryClick(bookCategory);
-                }
-            });
+            categoriesMenuItem.addItem(bookCategory.getCategory(), null, (MenuBar.Command) selectedItem -> categoryClick(bookCategory));
         }
 
         menuLayout.addComponent(newButton);
@@ -134,6 +132,7 @@ public class MainUI extends BaseUI {
         horizontalLayoutWithHorizontalPanelForButtons.setWidth(100f, Unit.PERCENTAGE);
         horizontalLayoutWithHorizontalPanelForButtons.addComponent(horizontalPanelForButtons);
         horizontalLayoutWithHorizontalPanelForButtons.setComponentAlignment(horizontalPanelForButtons, Alignment.TOP_RIGHT);
+        horizontalLayoutWithHorizontalPanelForButtons.addStyleName("for-first-top-level");
 
         /*components.addComponent(horizontalPanelForButtons);*/
         components.addComponents(horizontalLayoutWithHorizontalPanelForButtons, menuLayout, layoutWithBooks);
@@ -198,24 +197,32 @@ public class MainUI extends BaseUI {
         Button addBookToBasket = new Button("Add to basket", VaadinIcons.PLUS);
         addBookToBasket.addClickListener(event -> {
             if (!isAnonymousUser) {
-                Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-                String stringUsername = (principal instanceof String) ? (String) principal : ((User) principal).getUsername();
-
-                ru.alex.bookStore.entities.User user = userService.findByUsername(stringUsername);
+                ru.alex.bookStore.entities.User user = getCurrentLoggedInUser();
                 boolean result = basketService.addItemForUser(user, book);
 
                 if (result)
                     Notification.show("Book \"" + book.toString() + "\" added to shopping basket",
                             Notification.Type.TRAY_NOTIFICATION);
 
-                if (null != shoppingBasketButton)
-                    shoppingBasketButton.setCaption("Items: " + basketService.getTotalCountForUser(user) +
-                            ", Total Cost: " + basketService.getTotalCostForUser(user));
+                setShoppingBasketButtonCaption(user);
             }
         });
         layout.addComponent(addBookToBasket);
 
         return layout;
+    }
+
+    private void setShoppingBasketButtonCaption(ru.alex.bookStore.entities.User user) {
+        if (null != shoppingBasketButton && null != user)
+            shoppingBasketButton.setCaption("Items: " + basketService.getTotalCountForUser(user) +
+                    ", Total Cost: " + basketService.getTotalCostForUser(user));
+    }
+
+    private ru.alex.bookStore.entities.User getCurrentLoggedInUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String stringUsername = (principal instanceof String) ? (String) principal : ((User) principal).getUsername();
+
+        return userService.findByUsername(stringUsername);
     }
 
     private void aboutUsButtonClick(Button.ClickEvent event) {

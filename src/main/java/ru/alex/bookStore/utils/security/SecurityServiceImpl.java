@@ -50,7 +50,7 @@ public class SecurityServiceImpl implements SecurityService {
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
             }
         } catch (Exception e) {
-            e.printStackTrace(System.out);
+            e.printStackTrace();
         }
     }
 

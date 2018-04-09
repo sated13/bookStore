@@ -77,6 +77,7 @@ public class ShoppingBasketUI extends BaseUI {
         layout.addComponent(horizontalPanelForButtons);
         layout.setComponentAlignment(horizontalPanelForButtons, Alignment.TOP_RIGHT);
         layout.setWidth(100f, Unit.PERCENTAGE);
+        layout.addStyleName("for-first-top-level");
 
         globalLayout.addComponent(layout);
         /*globalLayout.addComponent(horizontalPanelForButtons);
@@ -94,7 +95,7 @@ public class ShoppingBasketUI extends BaseUI {
 
     private AbstractOrderedLayout deleteButton(Book book) {
         HorizontalLayout layout = new HorizontalLayout();
-        layout.setDefaultComponentAlignment(Alignment.MIDDLE_CENTER);
+        layout.setDefaultComponentAlignment(Alignment.MIDDLE_LEFT);
 
         Button deleteBookFromBasketButton = new Button("Delete from basket", VaadinIcons.MINUS);
 

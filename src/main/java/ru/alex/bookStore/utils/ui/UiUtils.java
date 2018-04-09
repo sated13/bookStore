@@ -86,6 +86,7 @@ public class UiUtils {
             TextArea descriptionTextArea = new TextArea("Description");
             descriptionTextArea.setValue(book.getDescription());
             descriptionTextArea.setReadOnly(true);
+            descriptionTextArea.setWidth(100f, Sizeable.Unit.PERCENTAGE);
             rightPanelWithDetails.addComponent(descriptionTextArea);
         }
 
@@ -102,7 +103,7 @@ public class UiUtils {
         }
 
         if (book.getPrice() != 0.0) {
-            Label priceLabel = new Label("Price: " + (Math.rint(book.getPrice() * 100) / 100));
+            Label priceLabel = new Label("Price, $: " + (Math.rint(book.getPrice() * 100) / 100));
             priceLabel.setWidth(100f, Sizeable.Unit.PERCENTAGE);
             rightPanelWithDetails.addComponent(priceLabel);
         }

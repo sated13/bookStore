@@ -254,7 +254,7 @@ public class UserServiceImpl implements UserService {
                 }
             } catch (Exception e) {
                 //ToDo: add logging
-                e.printStackTrace(System.out);
+                e.printStackTrace();
             }
         }
 

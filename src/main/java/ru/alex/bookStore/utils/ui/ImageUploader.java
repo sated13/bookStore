@@ -14,7 +14,7 @@ public class ImageUploader extends CustomComponent implements Upload.Receiver, U
         Upload.FailedListener, Upload.ProgressListener {
 
     String filename;
-    ByteArrayOutputStream outputStreamForImage = new ByteArrayOutputStream(10240);
+    ByteArrayOutputStream outputStreamForImage = new ByteArrayOutputStream(4096000); // 4 megabytes
     ProgressBar progressBar = new ProgressBar(0.0f);
     Image coverImage = new Image("Cover");
     final HashSet<String> imageMimeTypes = new HashSet<>(Arrays.asList("image/gif", "image/png", "image/jpeg", "image/bmp"));
@@ -67,6 +67,10 @@ public class ImageUploader extends CustomComponent implements Upload.Receiver, U
         if (!isErrorFlag) {
             showImage();
         }
+    }
+
+    public void setFilename(String filename) {
+        this.filename = filename;
     }
 
     @Override

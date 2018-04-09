@@ -9,7 +9,11 @@
         border-radius: 7px;
     }
 
-    .v-horizontallayout {
+    .v-horizontallayout.for-first-top-level {
+        background-color: rgba(0, 0, 0, 0.74);
+    }
+
+    .v-horizontallayout.for-second-top-level {
         background-color: rgba(0, 0, 0, 0.71);
     }
 
@@ -34,5 +38,10 @@
 
     div.v-formlayout.v-layout.v-widget.v-has-width {
         background-color: #f8f8f8;
+    }
+
+    .v-button-link {
+        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.05);
+        font-weight: normal;
     }
 }

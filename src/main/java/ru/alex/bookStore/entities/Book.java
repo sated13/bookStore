@@ -4,7 +4,6 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -23,6 +22,7 @@ public class Book implements Serializable {
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> authors;
 
+    @Column(length = 10000)
     private String description;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -42,6 +42,10 @@ public class Book implements Serializable {
     private Cover pictureOfBookCover;
 
     public Book() {
+    }
+
+    public Long getID() {
+        return bookId;
     }
 
     public String getBookTitle() {

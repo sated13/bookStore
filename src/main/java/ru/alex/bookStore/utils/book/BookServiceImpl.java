@@ -33,17 +33,27 @@ public class BookServiceImpl implements BookService {
     @Override
     public boolean save(Map<String, Object> bookParameters) {
         Book newBook = new Book();
-        Cover cover = setParameters(newBook, bookParameters);
+        setParameters(newBook, bookParameters);
         //BasicConfigurator.configure();
         logger.info("test string");
         logger.debug("save Book method, bookParameters: {}", bookParameters);
         try {
+            Cover cover = coverService.createEmptyCover();
             newBook.setPictureOfBookCover(cover);
             newBook.setAddingDay(LocalDate.now());
             coverService.save(cover);
             bookRepository.save(newBook);
+            coverService.setBookId(cover, newBook.getID());
+
+            if (bookParameters.containsKey("pictureOfBookCover")) {
+                cover.setPictureOfBookCover((byte[]) bookParameters.get("pictureOfBookCover"));
+                cover.setPresented(true);
+            }
+
+            coverService.save(cover);
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
 
@@ -156,16 +166,21 @@ public class BookServiceImpl implements BookService {
     @Override
     public boolean changeBookDetails(Book book, Map<String, Object> bookParameters) {
         try {
-            Cover newCover = setParameters(book, bookParameters);
+            Cover newCover = coverService.createEmptyCover();
 
-            if (newCover.isPresented()) {
+            if (bookParameters.containsKey("pictureOfBookCover")) {
+                newCover.setPictureOfBookCover((byte[]) bookParameters.get("pictureOfBookCover"));
+                newCover.setPresented(true);
+
                 book.setPictureOfBookCover(newCover);
                 coverService.save(newCover);
             }
+
             bookRepository.save(book);
             return true;
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }
@@ -200,8 +215,7 @@ public class BookServiceImpl implements BookService {
         }
     }
 
-    private Cover setParameters(Book book, Map<String, Object> bookParameters) {
-        Cover cover = new Cover();
+    private void setParameters(Book book, Map<String, Object> bookParameters) {
 
         for (String key : bookParameters.keySet()) {
             switch (key) {
@@ -241,15 +255,8 @@ public class BookServiceImpl implements BookService {
                     book.setNumberOfCopies((Integer) bookParameters.get(key));
                     break;
                 }
-                case "pictureOfBookCover": {
-                    cover = new Cover((byte[]) bookParameters.get(key));
-                    cover.setPresented(true);
-                    break;
-                }
             }
         }
-
-        return cover;
     }
 
     @Override
@@ -283,7 +290,7 @@ public class BookServiceImpl implements BookService {
                 }
             } catch (Exception e) {
                 //ToDo: add logging
-                e.printStackTrace(System.out);
+                e.printStackTrace();
             }
         }
 

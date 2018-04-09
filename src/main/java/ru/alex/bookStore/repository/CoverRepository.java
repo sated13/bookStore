@@ -5,5 +5,4 @@ import ru.alex.bookStore.entities.Cover;
 
 public interface CoverRepository extends JpaRepository<Cover, Long> {
 
-    Cover findByPictureOfBookCover(byte[] pictureOfBookCover);
 }
