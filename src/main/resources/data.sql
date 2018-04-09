@@ -11,19 +11,19 @@ commit;
 --COVERS
 
 insert into COVERS (COVER_ID, IS_PRESENTED, FILE_NAME)
-values (1, true, 'book_1.png');
+values (1, true, 'book_1.jpg');
 insert into COVERS (COVER_ID, IS_PRESENTED, FILE_NAME)
-values (2, true, 'book_2.png');
+values (2, true, 'book_2.jpg');
 insert into COVERS (COVER_ID, IS_PRESENTED, FILE_NAME)
-values (3, true, 'book_3.png');
+values (3, true, 'book_3.jpg');
 insert into COVERS (COVER_ID, IS_PRESENTED, FILE_NAME)
-values (4, true, 'book_4.png');
+values (4, true, 'book_4.jpg');
 insert into COVERS (COVER_ID, IS_PRESENTED, FILE_NAME)
-values (5, true, 'book_5.png');
+values (5, true, 'book_5.jpg');
 insert into COVERS (COVER_ID, IS_PRESENTED, FILE_NAME)
-values (6, true, 'book_6.png');
+values (6, true, 'book_6.jpg');
 insert into COVERS (COVER_ID, IS_PRESENTED, FILE_NAME)
-values (7, true, 'book_7.png');
+values (7, true, 'book_7.jpg');
 commit;
 
 --books

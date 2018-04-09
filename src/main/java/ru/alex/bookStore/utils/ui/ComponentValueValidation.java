@@ -10,6 +10,7 @@ import org.springframework.core.convert.ConversionService;
 
 public class ComponentValueValidation {
 
+    @SuppressWarnings("unchecked")
     public static void validate(AbstractField field, Validator validator, ConversionService conversionService, Class convertToClass) {
         field.addValueChangeListener(event -> {
             try {

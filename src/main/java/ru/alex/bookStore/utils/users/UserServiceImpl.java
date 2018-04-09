@@ -38,6 +38,7 @@ public class UserServiceImpl implements UserService {
             } else return false;
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }
@@ -49,6 +50,7 @@ public class UserServiceImpl implements UserService {
             return true;
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }
@@ -59,6 +61,7 @@ public class UserServiceImpl implements UserService {
             return true;
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }
@@ -79,6 +82,7 @@ public class UserServiceImpl implements UserService {
             user = userRepository.findByUsername(username);
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
         }
         return user;
     }
@@ -97,6 +101,7 @@ public class UserServiceImpl implements UserService {
             }
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return null;
         }
 
@@ -150,6 +155,7 @@ public class UserServiceImpl implements UserService {
             return true;
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }
@@ -160,6 +166,7 @@ public class UserServiceImpl implements UserService {
             return userRepository.findUsersByRolesContains(role);
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return null;
         }
     }
@@ -179,6 +186,7 @@ public class UserServiceImpl implements UserService {
         }
         catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
         }
 
         return resultMap;
@@ -197,6 +205,7 @@ public class UserServiceImpl implements UserService {
         }
         catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
         }
 
         return resultMap;
@@ -209,6 +218,7 @@ public class UserServiceImpl implements UserService {
         }
         catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return 0;
         }
     }
@@ -219,6 +229,7 @@ public class UserServiceImpl implements UserService {
             return userRepository.count();
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return 0;
         }
     }
@@ -234,6 +245,7 @@ public class UserServiceImpl implements UserService {
                 countOfChangedUsers++;
             } catch (Exception e) {
                 //ToDo: add logging
+                e.printStackTrace();
             }
         }
 

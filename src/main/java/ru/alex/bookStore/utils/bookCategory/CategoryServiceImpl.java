@@ -29,6 +29,7 @@ public class CategoryServiceImpl implements CategoryService {
             } else return false;
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }
@@ -40,6 +41,7 @@ public class CategoryServiceImpl implements CategoryService {
             return true;
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }
@@ -50,6 +52,7 @@ public class CategoryServiceImpl implements CategoryService {
             return true;
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }
@@ -70,6 +73,7 @@ public class CategoryServiceImpl implements CategoryService {
             return categoryRepository.count();
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return 0;
         }
     }
@@ -80,6 +84,7 @@ public class CategoryServiceImpl implements CategoryService {
             userRole = categoryRepository.findBookCategoryByCategory(category);
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
         }
         return userRole;
     }
@@ -120,6 +125,7 @@ public class CategoryServiceImpl implements CategoryService {
             }
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }

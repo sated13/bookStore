@@ -32,9 +32,9 @@ public class MainUI extends BaseUI {
     @Autowired
     UiUtils uiUtils;
 
-    Button loginButtonBase = new Button("Login", this::loginButtonBaseClick);
+    private Button loginButtonBase = new Button("Login", this::loginButtonBaseClick);
     Button registerButtonBase = new Button("Register", this::registerButtonBaseClick);
-    Button logoutButtonBase = new Button("Logout", this::logoutButtonClicked);
+    private Button logoutButtonBase = new Button("Logout", this::logoutButtonClicked);
     Button adminPanelButton = new Button("Admin Panel", this::adminPanelButtonClick);
     Button shoppingBasketButton = new Button("Items: 0, Total Cost: 0", VaadinIcons.CART);
 

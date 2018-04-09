@@ -27,6 +27,7 @@ public class RoleServiceImpl implements RoleService {
             } else return false;
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }
@@ -38,6 +39,7 @@ public class RoleServiceImpl implements RoleService {
             return true;
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }
@@ -48,6 +50,7 @@ public class RoleServiceImpl implements RoleService {
             return true;
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }
@@ -68,6 +71,7 @@ public class RoleServiceImpl implements RoleService {
             return roleRepository.count();
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return 0;
         }
     }
@@ -78,6 +82,7 @@ public class RoleServiceImpl implements RoleService {
             userRole = roleRepository.findByAuthority(role);
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
         }
         return userRole;
     }
@@ -120,6 +125,7 @@ public class RoleServiceImpl implements RoleService {
             }
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }

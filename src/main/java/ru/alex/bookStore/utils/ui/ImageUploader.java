@@ -13,15 +13,17 @@ import java.util.HashSet;
 public class ImageUploader extends CustomComponent implements Upload.Receiver, Upload.SucceededListener,
         Upload.FailedListener, Upload.ProgressListener {
 
-    String filename;
-    ByteArrayOutputStream outputStreamForImage = new ByteArrayOutputStream(10240000); // 10 megabytes
+    private String filename;
+    private final int maxFileSizeInBytes = 2097152; // 2 megabytes
+    private ByteArrayOutputStream outputStreamForImage = new ByteArrayOutputStream(2097152); // 2 megabytes
     ProgressBar progressBar = new ProgressBar(0.0f);
     Image coverImage = new Image("Cover");
-    final HashSet<String> imageMimeTypes = new HashSet<>(Arrays.asList("image/gif", "image/png", "image/jpeg", "image/bmp"));
+    final HashSet<String> imageMimeTypes = new HashSet<>(Arrays.asList("image/gif", "image/jpg", "image/jpeg"));
     Upload uploadComponent = new Upload("", null);
     Button resetImageButton = new Button("Reset", this::resetButtonClick);
     Label uploadCoverLabel = new Label("Upload cover");
     boolean isErrorFlag = false;
+    boolean isChanged = false;
 
     public ImageUploader() {
         uploadComponent.setReceiver(this);
@@ -51,13 +53,14 @@ public class ImageUploader extends CustomComponent implements Upload.Receiver, U
 
     public OutputStream receiveUpload(String filename,
                                       String mimeType) {
-        if (imageMimeTypes.contains(mimeType)) {
+        if ((uploadComponent.getUploadSize() < maxFileSizeInBytes) && (imageMimeTypes.contains(mimeType))) {
             this.filename = filename;
             outputStreamForImage.reset();
             isErrorFlag = false;
-            return outputStreamForImage;
+            isChanged = true;
         } else {
             isErrorFlag = true;
+            isChanged = false;
             uploadComponent.interruptUpload();
         }
         return outputStreamForImage;
@@ -75,7 +78,7 @@ public class ImageUploader extends CustomComponent implements Upload.Receiver, U
 
     @Override
     public void uploadFailed(Upload.FailedEvent event) {
-        Notification.show("Upload failed", Notification.Type.ERROR_MESSAGE);
+        Notification.show("Upload failed. Maximum size of image is 2 Mib.", Notification.Type.ERROR_MESSAGE);
     }
 
     @Override
@@ -131,5 +134,9 @@ public class ImageUploader extends CustomComponent implements Upload.Receiver, U
         }
 
         coverImage.markAsDirty();
+    }
+
+    public boolean isChanged() {
+        return isChanged;
     }
 }

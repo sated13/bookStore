@@ -1,11 +1,13 @@
 package ru.alex.bookStore.ui;
 
+import com.vaadin.annotations.Theme;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
 
 @SpringUI(path = "/accessDenied")
-public class AccessDeniedUI extends UI {
+@Theme("fixed-valo-favicon")
+class AccessDeniedUI extends UI {
 
     @Override
     protected void init(VaadinRequest vaadinRequest) {

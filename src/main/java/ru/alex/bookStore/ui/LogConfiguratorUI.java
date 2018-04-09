@@ -1,5 +1,6 @@
 package ru.alex.bookStore.ui;
 
+import com.vaadin.annotations.Theme;
 import com.vaadin.server.Page;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.spring.annotation.SpringUI;
@@ -9,7 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import ru.alex.bookStore.utils.LogService;
 
 @SpringUI(path = "/logConfigurator")
-public class LogConfiguratorUI extends UI {
+@Theme("fixed-valo-favicon")
+class LogConfiguratorUI extends UI {
 
     @Autowired
     private LogService logService;

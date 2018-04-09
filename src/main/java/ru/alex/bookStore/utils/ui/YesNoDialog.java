@@ -4,7 +4,7 @@ import com.vaadin.ui.*;
 
 public class YesNoDialog extends Window implements Button.ClickListener {
 
-    Callback callback;
+    private Callback callback;
     Button yes = new Button("Yes", this);
     Button no = new Button("No", this);
 

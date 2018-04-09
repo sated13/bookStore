@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.alex.bookStore.entities.User;
 
 @Service
-public class UserDetailsServiceImpl implements UserDetailsService {
+class UserDetailsServiceImpl implements UserDetailsService {
 
     @Autowired
     UserService userService;

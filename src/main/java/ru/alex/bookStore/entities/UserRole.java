@@ -3,7 +3,6 @@ package ru.alex.bookStore.entities;
 import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.*;
-import java.util.Set;
 
 @Entity
 @Table(name = "user_roles")
@@ -15,6 +14,7 @@ public class UserRole implements GrantedAuthority {
     private Long userRoleId;
 
     @Column(nullable = false, length = 45)
+    private
     String authority;
 
     public UserRole() {

@@ -13,7 +13,6 @@ import ru.alex.bookStore.utils.cover.CoverService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -67,6 +66,7 @@ public class BookServiceImpl implements BookService {
             return true;
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return false;
         }
     }
@@ -96,6 +96,7 @@ public class BookServiceImpl implements BookService {
             }
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
         }
 
         return resultMap;
@@ -107,6 +108,7 @@ public class BookServiceImpl implements BookService {
             return bookRepository.countBooksByCategoriesContains(category);
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return 0;
         }
     }
@@ -123,6 +125,7 @@ public class BookServiceImpl implements BookService {
             }
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
         }
 
         return resultMap;
@@ -134,6 +137,7 @@ public class BookServiceImpl implements BookService {
             return bookRepository.count();
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return 0;
         }
     }
@@ -167,8 +171,10 @@ public class BookServiceImpl implements BookService {
     public boolean changeBookDetails(Book book, Map<String, Object> bookParameters) {
         try {
             Cover newCover = coverService.createEmptyCover();
+            setParameters(book, bookParameters);
 
             if (bookParameters.containsKey("pictureOfBookCover")) {
+                newCover.setFilename(book.getID());
                 newCover.setPictureOfBookCover((byte[]) bookParameters.get("pictureOfBookCover"));
                 newCover.setPresented(true);
 
@@ -191,6 +197,7 @@ public class BookServiceImpl implements BookService {
             return bookRepository.findBooksByCategoriesContains(category);
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return null;
         }
     }
@@ -201,6 +208,7 @@ public class BookServiceImpl implements BookService {
             return bookRepository.findTop10ByOrderByAddingDayDesc();
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return null;
         }
     }
@@ -211,10 +219,12 @@ public class BookServiceImpl implements BookService {
             return bookRepository.findTop10ByOrderByCountOfSoldItemsDesc();
         } catch (Exception e) {
             //ToDo: add logging
+            e.printStackTrace();
             return null;
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void setParameters(Book book, Map<String, Object> bookParameters) {
 
         for (String key : bookParameters.keySet()) {
@@ -270,6 +280,7 @@ public class BookServiceImpl implements BookService {
                 countOfChangedBooks++;
             } catch (Exception e) {
                 //ToDo: add logging
+                e.printStackTrace();
             }
         }
 

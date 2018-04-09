@@ -1,5 +1,6 @@
 package ru.alex.bookStore.ui;
 
+import com.vaadin.annotations.Theme;
 import com.vaadin.data.Result;
 import com.vaadin.data.provider.DataProvider;
 import com.vaadin.data.provider.ListDataProvider;
@@ -32,6 +33,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @SpringUI(path = "/adminPanel")
+@Theme("fixed-valo-favicon")
 public class AdminUI extends BaseUI {
 
     @Autowired
@@ -45,18 +47,19 @@ public class AdminUI extends BaseUI {
     @Autowired
     ConversionService conversionService;
 
-    Button logoutButtonBase = new Button("Logout", this::logoutButtonClicked);
+    private Button logoutButtonBase = new Button("Logout", this::logoutButtonClicked);
     Button logConfigButtonBase = new Button("Log configuration", this::logConfigurationButtonClicked);
     VerticalLayout globalPanel = new VerticalLayout();
     HorizontalSplitPanel createAndShowAllItemsPanel = new HorizontalSplitPanel();
     VerticalLayout leftPanel = new VerticalLayout();
-    VerticalLayout rightPanel = new VerticalLayout();
+    private VerticalLayout rightPanel = new VerticalLayout();
 
     private final String usersCaption = "Users";
     private final String rolesCaption = "Roles";
     private final String booksCaption = "Books";
     private final String categoriesCaption = "Categories";
 
+    @SuppressWarnings("unchecked")
     @Override
     public void init(VaadinRequest vaadinRequest) {
         float horizontalPanelSize = 0;
@@ -92,22 +95,22 @@ public class AdminUI extends BaseUI {
         menuBar.setStyleName(ValoTheme.MENUBAR_BORDERLESS);
         menuBar.setWidth(100f, Unit.PERCENTAGE);
 
-        MenuBar.MenuItem usersMenuItem = menuBar.addItem("Users",
+        menuBar.addItem("Users",
                 (selectedMenuItem) -> {
                     createLeftPanelForUsersMenu();
                     createRightPanelForUsersMenu();
                 });
-        MenuBar.MenuItem rolesMenuItem = menuBar.addItem("Roles",
+        menuBar.addItem("Roles",
                 (selectedMenuItem) -> {
                     createLeftPanelForRolesMenu();
                     createRightPanelForRolesMenu();
                 });
-        MenuBar.MenuItem booksMenuItem = menuBar.addItem("Books",
+        menuBar.addItem("Books",
                 (selectedMenuItem) -> {
                     createLeftPanelForBooksMenu();
                     createRightPanelForBooksMenu();
                 });
-        MenuBar.MenuItem categoriesMenuItem = menuBar.addItem("Categories",
+        menuBar.addItem("Categories",
                 (selectedMenuItem) -> {
                     createLeftPanelForCategoriesMenu();
                     createRightPanelForCategoriesMenu();
@@ -206,7 +209,6 @@ public class AdminUI extends BaseUI {
     }
 
     private void selectedUserDoubleClick(String selectedUser) {
-        securityService.getAllSessions();
         Window userDetailsWindow = new Window("User details");
 
         User user = userService.findByUsername(selectedUser);
@@ -518,6 +520,7 @@ public class AdminUI extends BaseUI {
         addWindow(window);
     }
 
+    @SuppressWarnings("unchecked")
     private void createBookButtonClick(Button.ClickEvent e) {
         Window window = new Window("Create book");
 
@@ -571,6 +574,7 @@ public class AdminUI extends BaseUI {
         addWindow(window);
     }
 
+    @SuppressWarnings("unchecked")
     private void deleteUserButtonClick(Button.ClickEvent e) {
         VerticalLayout panel = (VerticalLayout) createAndShowAllItemsPanel.getFirstComponent();
         ListSelect<String> listWithUsers = (ListSelect<String>) panel.getComponent(0);
@@ -615,6 +619,7 @@ public class AdminUI extends BaseUI {
         addWindow(confirmDialogWindow);
     }
 
+    @SuppressWarnings("unchecked")
     private void deleteBookButtonClick(Button.ClickEvent e) {
         VerticalLayout panel = (VerticalLayout) createAndShowAllItemsPanel.getFirstComponent();
         ListSelect<Book> listWithBooks = (ListSelect<Book>) panel.getComponent(0);
@@ -637,6 +642,7 @@ public class AdminUI extends BaseUI {
         addWindow(confirmDialogWindow);
     }
 
+    @SuppressWarnings("unchecked")
     private void deleteCategoryButtonClick(Button.ClickEvent e) {
         VerticalLayout panel = (VerticalLayout) createAndShowAllItemsPanel.getFirstComponent();
         ListSelect<String> listWithUsers = (ListSelect<String>) panel.getComponent(0);
@@ -735,15 +741,6 @@ public class AdminUI extends BaseUI {
 
             listWithAllRoles.setItems(setWithAbsentRolesInList);
 
-            /*Button addButton = new Button("Add", ev -> {
-                if (!listWithAllRoles.getSelectedItems().isEmpty()) {
-                    roles.addAll(listWithAllRoles.getSelectedItems());
-                    dataProvider.refreshAll();
-
-                    allRolesWindow.close();
-                }
-            });*/
-
             Button addButton = new Button("Add", ev -> addButtonClick(listWithAllRoles, roles, dataProvider, allRolesWindow));
 
             Button cancelButton = new Button("Cancel", ev -> allRolesWindow.close());
@@ -760,14 +757,6 @@ public class AdminUI extends BaseUI {
             allRolesWindow.setModal(true);
             addWindow(allRolesWindow);
         });
-
-        /*deleteRolesButton.addClickListener(event -> {
-            Set<String> setWithSelectedRoles = listWithRoles.getSelectedItems();
-            if (!setWithSelectedRoles.isEmpty()) {
-                roles.removeAll(setWithSelectedRoles);
-                dataProvider.refreshAll();
-            }
-        });*/
 
         deleteRolesButton.addClickListener(event -> deleteButtonClick(listWithRoles, roles, dataProvider));
 
@@ -841,15 +830,6 @@ public class AdminUI extends BaseUI {
 
             listWithAllUsers.setItems(setWithAbsentUsersInList);
 
-            /*Button addButton = new Button("Add", ev -> {
-                if (!listWithAllUsers.getSelectedItems().isEmpty()) {
-                    users.addAll(listWithAllUsers.getSelectedItems());
-                    dataProvider.refreshAll();
-
-                    allUsersWindow.close();
-                }
-            });*/
-
             Button addButton = new Button("Add", ev -> addButtonClick(listWithAllUsers, users, dataProvider, allUsersWindow));
 
             Button cancelButton = new Button("Cancel", ev -> allUsersWindow.close());
@@ -866,14 +846,6 @@ public class AdminUI extends BaseUI {
             allUsersWindow.setModal(true);
             addWindow(allUsersWindow);
         });
-
-        /*deleteUsersButton.addClickListener(event -> {
-            Set<String> setWithSelectedCategories = listWithUsers.getSelectedItems();
-            if (!setWithSelectedCategories.isEmpty()) {
-                users.removeAll(setWithSelectedCategories);
-                dataProvider.refreshAll();
-            }
-        });*/
 
         deleteUsersButton.addClickListener(event -> deleteButtonClick(listWithUsers, users, dataProvider));
 
@@ -941,10 +913,10 @@ public class AdminUI extends BaseUI {
             protected Result<LocalDate> handleUnparsableDateString(
                     String dateString) {
                 try {
-                    // try to parse with alternative format
                     LocalDate parsedAtServer = LocalDate.parse(dateString, DateTimeFormatter.ofPattern("yyyy"));
                     return Result.ok(parsedAtServer);
                 } catch (DateTimeParseException e) {
+                    e.printStackTrace();
                     return Result.error("Bad date");
                 }
             }
@@ -983,7 +955,7 @@ public class AdminUI extends BaseUI {
                 new StringLengthValidator("Authors can't be empty", 1, 6000), conversionService, String.class);
         ComponentValueValidation.validate(priceTextField,
                 new BigDecimalRangeValidator("Value should have positive decimal format from 0 to 2000000",
-                        BigDecimal.valueOf(0l), BigDecimal.valueOf(2000000l)), conversionService, BigDecimal.class);
+                        BigDecimal.valueOf(0L), BigDecimal.valueOf(2000000l)), conversionService, BigDecimal.class);
 
         leftPanel.addComponents(bookTitleTextField, authorsTextField, descriptionTextArea,
                 numberOfPagesTextField, yearDateField, publishingHouseTextField, priceTextField,
@@ -1019,14 +991,6 @@ public class AdminUI extends BaseUI {
 
             listWithAllCategories.setItems(setWithAbsentCategoriesInList);
 
-            /*Button addButton = new Button("Add", ev -> {
-                if (!listWithAllCategories.getSelectedItems().isEmpty()) {
-                    categories.addAll(listWithAllCategories.getSelectedItems());
-                    dataProvider.refreshAll();
-                    allCategoriesWindow.close();
-                }
-            });*/
-
             Button addButton = new Button("Add", ev -> addButtonClick(listWithAllCategories, categories, dataProvider, allCategoriesWindow));
 
             Button cancelButton = new Button("Cancel", ev -> allCategoriesWindow.close());
@@ -1043,14 +1007,6 @@ public class AdminUI extends BaseUI {
             allCategoriesWindow.setModal(true);
             addWindow(allCategoriesWindow);
         });
-
-        /*deleteCategoriesButton.addClickListener(event -> {
-            Set<String> setWithSelectedCategories = listWithCategories.getSelectedItems();
-            if (!setWithSelectedCategories.isEmpty()) {
-                categories.removeAll(setWithSelectedCategories);
-                dataProvider.refreshAll();
-            }
-        });*/
 
         deleteCategoriesButton.addClickListener(event -> deleteButtonClick(listWithCategories, categories, dataProvider));
 
@@ -1091,7 +1047,7 @@ public class AdminUI extends BaseUI {
             Map<String, Object> bookParameters = new HashMap<>();
 
             bookParameters.put("bookTitle", bookTitleTextField.getValue());
-            bookParameters.put("authors", Arrays.stream(authorsTextField.getValue().split(",")).map(item -> item.trim()).collect(Collectors.toSet()));
+            bookParameters.put("authors", Arrays.stream(authorsTextField.getValue().split(",")).map(String::trim).collect(Collectors.toSet()));
             bookParameters.put("description", descriptionTextArea.getValue());
             bookParameters.put("categories", categoryService.findByCategories(categories));
             bookParameters.put("numberOfPages", numberOfPagesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfPagesTextField.getValue(), Integer.class));
@@ -1100,7 +1056,7 @@ public class AdminUI extends BaseUI {
             bookParameters.put("price", priceTextField.getValue().isEmpty() ? 0.0 : conversionService.convert(priceTextField.getValue(), Double.class));
             bookParameters.put("numberOfCopies", numberOfCopiesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfCopiesTextField.getValue(), Integer.class));
 
-            if (pictureOfBookCoverImageUploader.getOutputStreamForImage().size() > 0) {
+            if (pictureOfBookCoverImageUploader.isChanged() && pictureOfBookCoverImageUploader.getOutputStreamForImage().size() > 0) {
                 bookParameters.put("pictureOfBookCover", pictureOfBookCoverImageUploader.getOutputStreamForImage().toByteArray());
             }
 

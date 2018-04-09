@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class ShoppingBasketService {
 
-    Map<User, Set<BasketItem>> basketItems = new ConcurrentHashMap<>();
+    private Map<User, Set<BasketItem>> basketItems = new ConcurrentHashMap<>();
 
     public ShoppingBasketService() {
     }

@@ -4,10 +4,8 @@ import com.vaadin.event.ShortcutAction;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.ui.*;
-import javafx.scene.input.KeyCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,7 +18,7 @@ import ru.alex.bookStore.utils.users.UserService;
 import java.util.HashSet;
 import java.util.Set;
 
-public class BaseUI extends UI {
+class BaseUI extends UI {
 
     @Autowired
     private UserDetailsService userDetailsService;
@@ -33,15 +31,15 @@ public class BaseUI extends UI {
     @Autowired
     protected SecurityService securityService;
 
-    Button loginButton = new Button("Login", this::loginButtonClick);
-    Button registerButton = new Button("Register", this::registerButtonClick);
-    Button resisterOnAuthorizationUIButton = new Button("Register", this::resisterOnAuthorizationUIButtonClick);
+    private Button loginButton = new Button("Login", this::loginButtonClick);
+    private Button registerButton = new Button("Register", this::registerButtonClick);
+    private Button resisterOnAuthorizationUIButton = new Button("Register", this::resisterOnAuthorizationUIButtonClick);
 
     TextField usernameField = new TextField("Login", "");
-    PasswordField passwordFieldAuthorization = new PasswordField("Password", "");
+    private PasswordField passwordFieldAuthorization = new PasswordField("Password", "");
     PasswordField passwordFieldRegistration = new PasswordField("Password", "");
     PasswordField confirmPasswordField = new PasswordField("Confirm password", "");
-    protected VaadinRequest localVaadinRequest;
+    VaadinRequest localVaadinRequest;
     private Boolean authorizationUIFlag = false;
     private Boolean registrationUIFlag = false;
 
@@ -51,7 +49,7 @@ public class BaseUI extends UI {
     protected void init(VaadinRequest vaadinRequest) {
     }
 
-    protected void createForm(String formName, VaadinRequest vaadinRequest) {
+    void createForm(String formName, VaadinRequest vaadinRequest) {
         localVaadinRequest = vaadinRequest;
 
         switch (formName) {
@@ -145,7 +143,7 @@ public class BaseUI extends UI {
         addWindow(window);
     }
 
-    protected void loginButtonClick(Button.ClickEvent e) {
+    private void loginButtonClick(Button.ClickEvent e) {
         try {
             UserDetails userDetails = userDetailsService.loadUserByUsername(usernameField.getValue());
             UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken;
@@ -169,13 +167,14 @@ public class BaseUI extends UI {
                 Notification.show("Wrong credentials!", Notification.Type.ERROR_MESSAGE);
             }
         } catch (Exception exp) {
+            exp.printStackTrace();
             Notification.show("Wrong credentials!", Notification.Type.ERROR_MESSAGE);
             //ToDo: add logging
             exp.printStackTrace();
         }
     }
 
-    protected void registerButtonClick(Button.ClickEvent e) {
+    private void registerButtonClick(Button.ClickEvent e) {
 
         if (null != passwordFieldRegistration.getValue() && passwordFieldRegistration.getValue().equals(confirmPasswordField.getValue())) {
             UserRole customerUserRole = roleService.findByRole(customerRole);
@@ -192,7 +191,7 @@ public class BaseUI extends UI {
         }
     }
 
-    protected void resisterOnAuthorizationUIButtonClick(Button.ClickEvent e) {
+    private void resisterOnAuthorizationUIButtonClick(Button.ClickEvent e) {
         getPage().setLocation("/register");
     }
 
@@ -200,7 +199,7 @@ public class BaseUI extends UI {
         return authorizationUIFlag;
     }
 
-    public void setAuthorizationUIFlag(Boolean flag) {
+    void setAuthorizationUIFlag(Boolean flag) {
         authorizationUIFlag = flag;
     }
 
@@ -208,7 +207,7 @@ public class BaseUI extends UI {
         return registrationUIFlag;
     }
 
-    public void setRegistrationUIFlag(Boolean flag) {
+    void setRegistrationUIFlag(Boolean flag) {
         registrationUIFlag = flag;
     }
 }

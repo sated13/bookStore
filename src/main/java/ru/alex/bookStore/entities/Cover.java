@@ -33,7 +33,7 @@ public class Cover {
     }
 
     public void setFilename(Long bookId) {
-        this.file_name = "book_" + bookId.toString() + ".png";
+        this.file_name = "book_" + bookId.toString() + ".jpg";
     }
 
     public byte[] getPictureOfBookCover() {
@@ -42,7 +42,7 @@ public class Cover {
                 String location = getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
                 BufferedImage cover = ImageIO.read(new File(location + "books_covers" + File.separator + file_name));
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                ImageIO.write(cover, "png", byteArrayOutputStream);
+                ImageIO.write(cover, "jpg", byteArrayOutputStream);
                 pictureOfBookCover = byteArrayOutputStream.toByteArray();
             } catch (IOException e) {
                 //ToDo: add logging
@@ -60,7 +60,7 @@ public class Cover {
 
                 ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(pictureOfBookCover);
                 BufferedImage cover = ImageIO.read(byteArrayInputStream);
-                ImageIO.write(cover, "png", new File(location + "books_covers" + File.separator + file_name));
+                ImageIO.write(cover, "jpg", new File(location + "books_covers" + File.separator + file_name));
             } catch (IOException e) {
                 //ToDo: add logging
                 e.printStackTrace();
