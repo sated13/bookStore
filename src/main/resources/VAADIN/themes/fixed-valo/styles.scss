@@ -22,8 +22,7 @@
     }
 
     .v-menubar-menuitem-caption {
-        color: #197de1;
-        text-decoration: underline;
+        color: #c8c9cb;
     }
 
     .v-menubar > .v-menubar-menuitem-selected {
@@ -43,5 +42,7 @@
     .v-button-link {
         text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.05);
         font-weight: normal;
+        text-decoration: none;
+        color: #c8c9cb;
     }
 }
