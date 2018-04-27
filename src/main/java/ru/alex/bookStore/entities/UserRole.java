@@ -1,11 +1,15 @@
 package ru.alex.bookStore.entities;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.*;
 
 @Entity
 @Table(name = "user_roles")
+@NoArgsConstructor
 public class UserRole implements GrantedAuthority {
 
     @Id
@@ -14,19 +18,7 @@ public class UserRole implements GrantedAuthority {
     private Long userRoleId;
 
     @Column(nullable = false, length = 45)
-    private
-    String authority;
-
-    public UserRole() {
-    }
-
-    public String getAuthority() {
-        return authority;
-    }
-
-    public void setAuthority(String role) {
-        this.authority = role;
-    }
+    @Getter @Setter private String authority;
 
     public boolean equals(Object obj) {
         if (null == obj) return false;

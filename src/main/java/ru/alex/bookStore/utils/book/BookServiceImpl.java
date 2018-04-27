@@ -1,5 +1,7 @@
 package ru.alex.bookStore.utils.book;
 
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -10,14 +12,13 @@ import ru.alex.bookStore.repository.BookRepository;
 import ru.alex.bookStore.utils.bookCategory.CategoryService;
 import ru.alex.bookStore.utils.cover.CoverService;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
+@NoArgsConstructor
 public class BookServiceImpl implements BookService {
 
     @Autowired
@@ -27,15 +28,12 @@ public class BookServiceImpl implements BookService {
     @Autowired
     CategoryService categoryService;
 
-    private Logger logger = LoggerFactory.getLogger(BookServiceImpl.class);
-
     @Override
     public boolean save(Map<String, Object> bookParameters) {
         Book newBook = new Book();
         setParameters(newBook, bookParameters);
-        //BasicConfigurator.configure();
-        logger.info("test string");
-        logger.debug("save Book method, bookParameters: {}", bookParameters);
+
+        log.debug("save Book method, bookParameters: {}", bookParameters);
         try {
             Cover cover = coverService.createEmptyCover();
             newBook.setPictureOfBookCover(cover);
@@ -51,8 +49,8 @@ public class BookServiceImpl implements BookService {
 
             coverService.save(cover);
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during book saving: {}", e.getMessage());
+            log.debug("Error during book saving: {}\nwith parameters: {}", e, bookParameters);
             return false;
         }
 
@@ -65,8 +63,8 @@ public class BookServiceImpl implements BookService {
             bookRepository.delete(book);
             return true;
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during book deleting: {}", e.getMessage());
+            log.debug("Error during book deleting: {}", e);
             return false;
         }
     }
@@ -95,8 +93,8 @@ public class BookServiceImpl implements BookService {
                 resultMap.put(category, setOfBooksForCategory);
             }
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during getting books by categories: {}", e.getMessage());
+            log.debug("Error during getting books by categories: {}", e);
         }
 
         return resultMap;
@@ -107,8 +105,8 @@ public class BookServiceImpl implements BookService {
         try {
             return bookRepository.countBooksByCategoriesContains(category);
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during counting books with category {}: {}", category, e.getMessage());
+            log.debug("Error during counting books with category {}: {}", category, e);
             return 0;
         }
     }
@@ -124,8 +122,8 @@ public class BookServiceImpl implements BookService {
                 resultMap.put(category, bookRepository.countBooksByCategoriesContains(category));
             }
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during counting books by categories: {}", e.getMessage());
+            log.debug("Error during counting books by categories: {}", e);
         }
 
         return resultMap;
@@ -136,8 +134,8 @@ public class BookServiceImpl implements BookService {
         try {
             return bookRepository.count();
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during counting books: {}", e.getMessage());
+            log.debug("Error during counting books: {}", e);
             return 0;
         }
     }
@@ -185,8 +183,8 @@ public class BookServiceImpl implements BookService {
             bookRepository.save(book);
             return true;
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during changing book details: {}\n{}\n{}", book, bookParameters, e.getMessage());
+            log.debug("Error during changing book details: {}\n{}\n{}", book, bookParameters, e);
             return false;
         }
     }
@@ -196,8 +194,8 @@ public class BookServiceImpl implements BookService {
         try {
             return bookRepository.findBooksByCategoriesContains(category);
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during finding book by category {}: {}", category, e.getMessage());
+            log.debug("Error during finding book by category {}: {}", category, e);
             return null;
         }
     }
@@ -207,8 +205,8 @@ public class BookServiceImpl implements BookService {
         try {
             return bookRepository.findTop10ByOrderByAddingDayDesc();
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during finding top 10 books: {}", e.getMessage());
+            log.debug("Error during finding top 10 books: {}", e);
             return null;
         }
     }
@@ -218,8 +216,8 @@ public class BookServiceImpl implements BookService {
         try {
             return bookRepository.findTop10ByOrderByCountOfSoldItemsDesc();
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during finding top 10 books ordered by count of sold items: {}", e.getMessage());
+            log.debug("Error during finding top 10 books ordered by count of sold items: {}", e);
             return null;
         }
     }
@@ -279,8 +277,8 @@ public class BookServiceImpl implements BookService {
                 bookRepository.save(book);
                 countOfChangedBooks++;
             } catch (Exception e) {
-                //ToDo: add logging
-                e.printStackTrace();
+                log.info("Error during adding category {} to book {}: {}", category, book, e.getMessage());
+                log.debug("Error during adding category {} to book {}: {}", category, book, e);
             }
         }
 
@@ -300,8 +298,8 @@ public class BookServiceImpl implements BookService {
                     countOfChangedBooks++;
                 }
             } catch (Exception e) {
-                //ToDo: add logging
-                e.printStackTrace();
+                log.info("Error during setting category {} for book {}: {}", category, book, e.getMessage());
+                log.debug("Error during setting category {} for book {}: {}", category, book, e);
             }
         }
 

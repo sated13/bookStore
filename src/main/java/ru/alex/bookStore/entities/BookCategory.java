@@ -1,10 +1,15 @@
 package ru.alex.bookStore.entities;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
 @Table(name = "book_categories")
+@NoArgsConstructor
 public class BookCategory implements Serializable {
 
     @Id
@@ -13,18 +18,7 @@ public class BookCategory implements Serializable {
     private Long bookCategoryId;
 
     @Column(nullable = false)
-    private String category = "";
-
-    public BookCategory() {
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
+    @Getter @Setter private String category = "";
 
     @Override
     public String toString() {

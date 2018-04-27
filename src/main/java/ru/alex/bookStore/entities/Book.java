@@ -1,5 +1,8 @@
 package ru.alex.bookStore.entities;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
@@ -9,6 +12,7 @@ import java.util.*;
 
 @Entity
 @Table(name = "books")
+@NoArgsConstructor
 public class Book implements Serializable {
 
     @Id
@@ -17,79 +21,32 @@ public class Book implements Serializable {
     private Long bookId;
 
     @Column(nullable = false)
-    private String bookTitle = "";
+    @Getter @Setter private String bookTitle = "";
 
     @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> authors;
+    @Getter @Setter private Set<String> authors;
 
     @Column(length = 10000)
-    private String description;
+    @Getter @Setter private String description;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "books_categories",
             joinColumns = @JoinColumn(name = "book_id", referencedColumnName = "book_id"),
             inverseJoinColumns = @JoinColumn(name = "book_category_id", referencedColumnName = "book_category_id"))
-    private Set<BookCategory> categories = new HashSet<>();
-    private Integer numberOfPages = 0;
-    private Short year = 0;
-    private String publishingHouse = "";
-    private double price = 0.0;
-    private Integer numberOfCopies = 0;
-    private Integer countOfSoldItems = 0;
-    private LocalDate addingDay;
+    @Getter @Setter private Set<BookCategory> categories = new HashSet<>();
+    @Getter @Setter private Integer numberOfPages = 0;
+    @Getter @Setter private Short year = 0;
+    @Getter @Setter private String publishingHouse = "";
+    @Getter @Setter private double price = 0.0;
+    @Getter @Setter private Integer numberOfCopies = 0;
+    @Getter @Setter private Integer countOfSoldItems = 0;
+    @Getter @Setter private LocalDate addingDay;
 
     @OneToOne(fetch = FetchType.EAGER)
-    private Cover pictureOfBookCover;
-
-    public Book() {
-    }
+    @Getter @Setter private Cover pictureOfBookCover;
 
     public Long getID() {
         return bookId;
-    }
-
-    public String getBookTitle() {
-        return bookTitle;
-    }
-
-    public Set<String> getAuthors() {
-        return Collections.unmodifiableSet(authors);
-    }
-
-    public Set<BookCategory> getCategories() {
-        return categories;
-    }
-
-    public Integer getNumberOfPages() {
-        return numberOfPages;
-    }
-
-    public Short getYear() {
-        return year;
-    }
-
-    public String getPublishingHouse() {
-        return publishingHouse;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public Integer getNumberOfCopies() {
-        return numberOfCopies;
-    }
-
-    public Cover getPictureOfBookCover() {
-        return pictureOfBookCover;
-    }
-
-    public void setBookTitle(String bookTitle) {
-        this.bookTitle = bookTitle;
-    }
-
-    public void setAuthors(Set<String> authors) {
-        this.authors = authors;
     }
 
     public void addAuthor(String author) {
@@ -102,58 +59,6 @@ public class Book implements Serializable {
 
     public void deleteCategory(BookCategory category) {
         categories.remove(category);
-    }
-
-    public void setCategories(Set<BookCategory> categories) {
-        this.categories = categories;
-    }
-
-    public void setNumberOfPages(Integer numberOfPages) {
-        this.numberOfPages = numberOfPages;
-    }
-
-    public void setYear(Short year) {
-        this.year = year;
-    }
-
-    public void setPublishingHouse(String publishingHouse) {
-        this.publishingHouse = publishingHouse;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    public void setNumberOfCopies(Integer numberOfCopies) {
-        this.numberOfCopies = numberOfCopies;
-    }
-
-    public Integer getCountOfSoldItems() {
-        return countOfSoldItems;
-    }
-
-    public void setCountOfSoldItems(Integer countOfSoldItems) {
-        this.countOfSoldItems = countOfSoldItems;
-    }
-
-    public LocalDate getAddingDay() {
-        return addingDay;
-    }
-
-    public void setAddingDay(LocalDate addingDay) {
-        this.addingDay = addingDay;
-    }
-
-    public void setPictureOfBookCover(Cover pictureOfBookCover) {
-        this.pictureOfBookCover = pictureOfBookCover;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Override

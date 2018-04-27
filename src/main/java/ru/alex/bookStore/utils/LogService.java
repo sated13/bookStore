@@ -1,5 +1,6 @@
 package ru.alex.bookStore.utils;
 
+import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -17,13 +18,14 @@ public class LogService {
     private Environment environment;
 
     public void updateLogConfiguration() {
-        if (Files.exists(Paths.get(getLogConfigFilePath()))) {
+
+        /*if (Files.exists(Paths.get(getLogConfigFilePath()))) {
             PropertyConfigurator.configure(getLogConfigFilePath());
-        }
+        }*/
     }
 
     public String getLogConfiguration() {
-        File file = new File(getLogConfigFilePath());
+        /*File file = new File(getLogConfigFilePath());
         StringBuffer config = new StringBuffer();
         try {
             if (file.exists()) {
@@ -35,11 +37,13 @@ public class LogService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return config.toString();
+        return config.toString();*/
+        return "empty log configuration";
     }
 
     public String getLogConfigFilePath() {
-        return System.getProperty("user.dir")
-                + File.separator + environment.getProperty("ru.alex.bookStore.logConfigurationFileName");
+        //return System.getProperty("user.dir")
+        //        + File.separator + environment.getProperty("ru.alex.bookStore.logConfigurationFileName");
+        return "";
     }
 }

@@ -1,5 +1,7 @@
 package ru.alex.bookStore.utils.bookCategory;
 
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -11,13 +13,12 @@ import java.util.*;
 
 @Service
 @Transactional
+@NoArgsConstructor
+@Slf4j
 public class CategoryServiceImpl implements CategoryService {
 
     @Autowired
     CategoryRepository categoryRepository;
-
-    CategoryServiceImpl() {
-    }
 
     public boolean save(String category) {
         try {
@@ -28,31 +29,28 @@ public class CategoryServiceImpl implements CategoryService {
                 return true;
             } else return false;
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during saving category {}: {}", category, e.getMessage());
+            log.debug("Error during saving category {}: {}", category, e);
             return false;
         }
     }
 
     public boolean delete(String category) {
-        BookCategory userRole = findByCategory(category);
-        try {
-            categoryRepository.delete(userRole);
-            return true;
-        } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
-            return false;
-        }
+        BookCategory bookCategory = findByCategory(category);
+        return deleteCategory(bookCategory);
     }
 
     public boolean delete(BookCategory category) {
+        return deleteCategory(category);
+    }
+
+    private boolean deleteCategory(BookCategory category) {
         try {
             categoryRepository.delete(category);
             return true;
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during deleting category {}: {}", category, e.getMessage());
+            log.debug("Error during deleting category {}: {}", category, e);
             return false;
         }
     }
@@ -72,21 +70,21 @@ public class CategoryServiceImpl implements CategoryService {
         try {
             return categoryRepository.count();
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during counting categories: {}", e.getMessage());
+            log.debug("Error during counting categories: {}", e);
             return 0;
         }
     }
 
     public BookCategory findByCategory(String category) {
-        BookCategory userRole = null;
+        BookCategory bookCategory = null;
         try {
-            userRole = categoryRepository.findBookCategoryByCategory(category);
+            bookCategory = categoryRepository.findBookCategoryByCategory(category);
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during finding category {}: {}", category, e.getMessage());
+            log.debug("Error during finding category {}: {}", category, e);
         }
-        return userRole;
+        return bookCategory;
     }
 
     @Override
@@ -124,8 +122,8 @@ public class CategoryServiceImpl implements CategoryService {
                 return false;
             }
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during changing category {} name to {}: {}", category, newCategoryName, e.getMessage());
+            log.debug("Error during changing category {} name to {}: {}", category, newCategoryName, e);
             return false;
         }
     }

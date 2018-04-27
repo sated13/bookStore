@@ -1,5 +1,7 @@
 package ru.alex.bookStore.utils.roles;
 
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -9,13 +11,12 @@ import ru.alex.bookStore.repository.RoleRepository;
 import java.util.*;
 
 @Service
+@Slf4j
+@NoArgsConstructor
 public class RoleServiceImpl implements RoleService {
 
     @Autowired
     RoleRepository roleRepository;
-
-    RoleServiceImpl() {
-    }
 
     public boolean save(String role) {
         try {
@@ -26,33 +27,29 @@ public class RoleServiceImpl implements RoleService {
                 return true;
             } else return false;
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during saving role {}: {}", role, e.getMessage());
+            log.debug("Error during saving role {}: {}", role, e);
+            return false;
+        }
+    }
+
+    private boolean deleteRole(UserRole role) {
+        try {
+            roleRepository.delete(role);
+            return true;
+        } catch (Exception e) {
+            log.info("Error during deleting role {}: {}", role, e.getMessage());
+            log.debug("Error during deleting role {}: {}", role, e);
             return false;
         }
     }
 
     public boolean delete(String role) {
-        UserRole userRole = findByRole(role);
-        try {
-            roleRepository.delete(userRole);
-            return true;
-        } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
-            return false;
-        }
+        return deleteRole(findByRole(role));
     }
 
     public boolean delete(UserRole role) {
-        try {
-            roleRepository.delete(role);
-            return true;
-        } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
-            return false;
-        }
+        return deleteRole(role);
     }
 
     public int delete(Set<String> roles) {
@@ -70,8 +67,8 @@ public class RoleServiceImpl implements RoleService {
         try {
             return roleRepository.count();
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during counting roles: {}", e.getMessage());
+            log.debug("Error during counting roles: {}", e);
             return 0;
         }
     }
@@ -81,8 +78,8 @@ public class RoleServiceImpl implements RoleService {
         try {
             userRole = roleRepository.findByAuthority(role);
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during finding role {}: {}", role, e.getMessage());
+            log.debug("Error during finding role {}: {}", role, e);
         }
         return userRole;
     }
@@ -114,7 +111,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public boolean changeRoleDetails(UserRole role, String roleName/*, Set<User> users*/) {
+    public boolean changeRoleDetails(UserRole role, String roleName) {
         try {
             if (role != null) {
                 role.setAuthority(roleName);
@@ -124,8 +121,8 @@ public class RoleServiceImpl implements RoleService {
                 return false;
             }
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.info("Error during changing role {} name to {}: {}", role, roleName, e.getMessage());
+            log.debug("Error during changing role {} name to {}: {}", role, roleName, e);
             return false;
         }
     }

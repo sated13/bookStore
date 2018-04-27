@@ -944,7 +944,7 @@ public class AdminUI extends BaseUI {
         if (!bookIsNull && null != book.getPictureOfBookCover() &&
                 book.getPictureOfBookCover().isPresented()) {
             pictureOfBookCoverImageUploader.setOutputStreamForImage(book.getPictureOfBookCover().getPictureOfBookCover());
-            pictureOfBookCoverImageUploader.setFilename(book.getPictureOfBookCover().getFilename());
+            pictureOfBookCoverImageUploader.setFilename(book.getPictureOfBookCover().getFileName());
             pictureOfBookCoverImageUploader.resetProgressbar();
             pictureOfBookCoverImageUploader.showImage();
         }
