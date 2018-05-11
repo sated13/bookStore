@@ -1,51 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <appender name="SPRING" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedFileNamingAndTriggeringPolicy">
-            <fileNamePattern>logs/spring.%d{yyyy-MM-dd}.log</fileNamePattern>
-        </rollingPolicy>
-
+    <appender name="SPRING" class="ch.qos.logback.core.FileAppender">
+        <file>logs/spring.log</file>
         <encoder>
             <pattern>%date %level %logger [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
-    <appender name="APPLICATION_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedFileNamingAndTriggeringPolicy">
-            <fileNamePattern>logs/spring.%d{yyyy-MM-dd}.log</fileNamePattern>
-        </rollingPolicy>
-
+    <appender name="APPLICATION_INFO" class="ch.qos.logback.core.FileAppender">
+        <file>logs/app_info.log</file>
         <encoder>
             <pattern>%date %level %logger [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
-    <appender name="APPLICATION_DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedFileNamingAndTriggeringPolicy">
-            <fileNamePattern>logs/spring.%d{yyyy-MM-dd}.log</fileNamePattern>
-        </rollingPolicy>
-
+    <appender name="APPLICATION_DEBUG" class="ch.qos.logback.core.FileAppender">
+        <file>logs/app_debug.log</file>
         <encoder>
             <pattern>%date %level %caller [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
-    <appender name="ROOT" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedFileNamingAndTriggeringPolicy">
-            <fileNamePattern>logs/spring.%d{yyyy-MM-dd}.log</fileNamePattern>
-        </rollingPolicy>
-
+    <appender name="ROOT" class="ch.qos.logback.core.FileAppender">
+        <file>logs/root.log</file>
         <encoder>
             <pattern>%date %level %caller [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
     <logger name="org.springframework" level="ALL">
-        <appender-ref ref="SPRING" />
+        <appender-ref ref="SPRING"/>
     </logger>
 
     <logger name="ru.alex.bookStore" level="INFO">
