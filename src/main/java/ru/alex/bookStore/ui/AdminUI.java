@@ -11,6 +11,7 @@ import com.vaadin.shared.ui.datefield.DateResolution;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 
 @SpringUI(path = "/adminPanel")
 @Theme("fixed-valo-favicon")
+@Slf4j
 public class AdminUI extends BaseUI {
 
     @Autowired
@@ -224,9 +226,12 @@ public class AdminUI extends BaseUI {
                                     boolean resultOfOperation = userService.changeUserDetails(user1.getUsername(), usernameField.getValue(),
                                             passwordFieldRegistration.getValue(), roles);
 
-                                    Notification.show("Changes for user \"" + usernameField.getValue() +
-                                                    ((resultOfOperation) ? "\" were saved." : " weren't saved."),
+                                    String msg = "Changes for user \"" + usernameField.getValue() +
+                                            ((resultOfOperation) ? "\" were saved." : " weren't saved.");
+
+                                    Notification.show(msg,
                                             Notification.Type.TRAY_NOTIFICATION);
+                                    log.info(msg);
                                 }
                             });
 
@@ -303,10 +308,12 @@ public class AdminUI extends BaseUI {
                                         countOfChangedUsers = userService.setRoleOnUsers(role1, users);
                                     }
 
-                                    Notification.show("Changes for role \"" + selectedRole +
-                                                    ((resultOfOperation) ? "\" were saved. " + "Role deleted from " +
-                                                            countOfChangedUsers + " users." : " weren't saved."),
+                                    String msg = "Changes for role \"" + selectedRole +
+                                            ((resultOfOperation) ? "\" were saved. " + "Role deleted from " +
+                                                    countOfChangedUsers + " users." : " weren't saved.");
+                                    Notification.show(msg,
                                             Notification.Type.TRAY_NOTIFICATION);
+                                    log.info(msg);
                                 }
                             });
 
@@ -366,10 +373,12 @@ public class AdminUI extends BaseUI {
                                 if (resultIsYes) {
                                     boolean resultOfOperation = bookService.changeBookDetails(book, bookParameters);
 
-                                    Notification.show("Changes for book \"" + book.getBookTitle() + " " +
-                                                    StringUtils.collectionToDelimitedString(book.getAuthors(), ", ") +
-                                                    ((resultOfOperation) ? "\" were saved." : " weren't saved."),
+                                    String msg = "Changes for book \"" + book.getBookTitle() + " " +
+                                            StringUtils.collectionToDelimitedString(book.getAuthors(), ", ") +
+                                            ((resultOfOperation) ? "\" were saved." : " weren't saved.");
+                                    Notification.show(msg,
                                             Notification.Type.TRAY_NOTIFICATION);
+                                    log.info(msg);
                                 }
                             });
 
@@ -446,10 +455,12 @@ public class AdminUI extends BaseUI {
                                         countOfChangedBooks = bookService.setCategoryOnBooks(category1, books);
                                     }
 
-                                    Notification.show("Changes for category \"" + selectedCategory +
-                                                    ((resultOfOperation) ? "\" were saved. " + "Category deleted from " +
-                                                            countOfChangedBooks + " books." : " weren't saved."),
+                                    String msg = "Changes for category \"" + selectedCategory +
+                                            ((resultOfOperation) ? "\" were saved. " + "Category deleted from " +
+                                                    countOfChangedBooks + " books." : " weren't saved.");
+                                    Notification.show(msg,
                                             Notification.Type.TRAY_NOTIFICATION);
+                                    log.info(msg);
                                 }
                             });
 
@@ -475,10 +486,12 @@ public class AdminUI extends BaseUI {
                     boolean resultOfOperation = userService.save(usernameField.getValue(),
                             passwordFieldRegistration.getValue(), roles);
 
-                    Notification.show("User \"" + usernameField.getValue() + "\" with roles \"" +
-                                    StringUtils.collectionToDelimitedString(roles, ", ") +
-                                    ((resultOfOperation) ? "\" created." : " didn't created."),
+                    String msg = "User \"" + usernameField.getValue() + "\" with roles \"" +
+                            StringUtils.collectionToDelimitedString(roles, ", ") +
+                            ((resultOfOperation) ? "\" created." : " didn't created.");
+                    Notification.show(msg,
                             Notification.Type.TRAY_NOTIFICATION);
+                    log.info(msg);
                 });
 
         createUserWindow.setContent(createUserLayout);
@@ -504,10 +517,12 @@ public class AdminUI extends BaseUI {
                         countOfChangedUsers = userService.addRoleToUsers(createdRole, users);
                     }
 
-                    Notification.show("Role \"" + newRoleName +
-                                    ((resultOfOperation) ? "\" created." : " didn't created. " + "Role applied to " +
-                                            countOfChangedUsers + " users."),
+                    String msg = "Role \"" + newRoleName +
+                            ((resultOfOperation) ? "\" created." : " didn't created. " + "Role applied to " +
+                                    countOfChangedUsers + " users.");
+                    Notification.show(msg,
                             Notification.Type.TRAY_NOTIFICATION);
+                    log.info(msg);
                 });
 
         window.setContent(createRoleLayout);
@@ -530,9 +545,11 @@ public class AdminUI extends BaseUI {
                     String bookTitle = (String) bookParameters.get("bookTitle");
                     String authors = StringUtils.collectionToDelimitedString((Set<String>) bookParameters.get("authors"), ", ");
 
-                    Notification.show("Book \"" + bookTitle + " " + authors +
-                                    ((resultOfOperation) ? "\" created." : " didn't created."),
+                    String msg = "Book \"" + bookTitle + " " + authors +
+                            ((resultOfOperation) ? "\" created." : " didn't created.");
+                    Notification.show(msg,
                             Notification.Type.TRAY_NOTIFICATION);
+                    log.info(msg);
                 });
 
         window.setContent(createBookLayout);
@@ -558,10 +575,12 @@ public class AdminUI extends BaseUI {
                         countOfChangedBooks = bookService.addCategoryToBooks(createdCategory, books);
                     }
 
-                    Notification.show("Category \"" + newCategoryName +
-                                    ((resultOfOperation) ? "\" created." : " didn't created. " + "Category applied to " +
-                                            countOfChangedBooks + " books."),
+                    String msg = "Category \"" + newCategoryName +
+                            ((resultOfOperation) ? "\" created." : " didn't created. " + "Category applied to " +
+                                    countOfChangedBooks + " books.");
+                    Notification.show(msg,
                             Notification.Type.TRAY_NOTIFICATION);
+                    log.info(msg);
                 });
 
         window.setContent(createCategoryLayout);
@@ -588,8 +607,10 @@ public class AdminUI extends BaseUI {
                         int countOfDeletedUsers = userService.delete(selectedItems);
                         createLeftPanelForUsersMenu();
                         createRightPanelForUsersMenu();
-                        Notification.show(countOfDeletedUsers + " users deleted.",
+                        String msg = countOfDeletedUsers + " users deleted.";
+                        Notification.show(msg,
                                 Notification.Type.TRAY_NOTIFICATION);
+                        log.info(msg);
                     }
                 });
 
@@ -610,8 +631,10 @@ public class AdminUI extends BaseUI {
                         int countOfDeletedUsers = roleService.delete(selectedItems);
                         createLeftPanelForRolesMenu();
                         createRightPanelForRolesMenu();
-                        Notification.show(countOfDeletedUsers + " roles deleted",
+                        String msg = countOfDeletedUsers + " roles deleted";
+                        Notification.show(msg,
                                 Notification.Type.TRAY_NOTIFICATION);
+                        log.info(msg);
                     }
                 });
 
@@ -633,8 +656,10 @@ public class AdminUI extends BaseUI {
                         int countOfDeletedUsers = bookService.delete(selectedItems);
                         createLeftPanelForBooksMenu();
                         createRightPanelForBooksMenu();
-                        Notification.show(countOfDeletedUsers + " books deleted",
+                        String msg = countOfDeletedUsers + " books deleted";
+                        Notification.show(msg,
                                 Notification.Type.TRAY_NOTIFICATION);
+                        log.info(msg);
                     }
                 });
 
@@ -656,8 +681,10 @@ public class AdminUI extends BaseUI {
                         int countOfDeletedUsers = categoryService.delete(selectedItems);
                         createLeftPanelForCategoriesMenu();
                         createRightPanelForCategoriesMenu();
-                        Notification.show(countOfDeletedUsers + " categories deleted.",
+                        String msg = countOfDeletedUsers + " categories deleted.";
+                        Notification.show(msg,
                                 Notification.Type.TRAY_NOTIFICATION);
+                        log.info(msg);
                     }
                 });
 
@@ -1180,7 +1207,7 @@ public class AdminUI extends BaseUI {
         }
     }
 
-    private void deleteButtonClick(ListSelect<String > listWithItems, Set<String> items, ListDataProvider<String> dataProvider) {
+    private void deleteButtonClick(ListSelect<String> listWithItems, Set<String> items, ListDataProvider<String> dataProvider) {
         Set<String> setWithSelectedItems = listWithItems.getSelectedItems();
         if (!setWithSelectedItems.isEmpty()) {
             items.removeAll(setWithSelectedItems);

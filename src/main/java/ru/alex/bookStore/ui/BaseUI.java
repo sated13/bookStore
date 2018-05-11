@@ -4,6 +4,7 @@ import com.vaadin.event.ShortcutAction;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.ui.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +19,7 @@ import ru.alex.bookStore.utils.users.UserService;
 import java.util.HashSet;
 import java.util.Set;
 
+@Slf4j
 class BaseUI extends UI {
 
     @Autowired
@@ -164,13 +166,17 @@ class BaseUI extends UI {
                 //redirect to main page
                 getPage().setLocation("/main");
             } else {
-                Notification.show("Wrong credentials!", Notification.Type.ERROR_MESSAGE);
+                String msg = "Wrong credentials!";
+                Notification.show(msg,
+                        Notification.Type.ERROR_MESSAGE);
+                log.info(msg + " for user: " + usernameField.getValue());
             }
         } catch (Exception exp) {
-            exp.printStackTrace();
-            Notification.show("Wrong credentials!", Notification.Type.ERROR_MESSAGE);
-            //ToDo: add logging
-            exp.printStackTrace();
+            String msg = "Wrong credentials!";
+            Notification.show(msg,
+                    Notification.Type.ERROR_MESSAGE);
+            log.info(msg + " for user: " + usernameField.getValue());
+            log.debug("Exception: {}", exp);
         }
     }
 

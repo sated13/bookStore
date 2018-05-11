@@ -6,6 +6,7 @@ import com.vaadin.server.VaadinRequest;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import ru.alex.bookStore.entities.Book;
@@ -21,6 +22,7 @@ import java.util.Set;
 
 @SpringUI(path = "/main")
 @Theme("fixed-valo")
+@Slf4j
 public class MainUI extends BaseUI {
 
     @Autowired
@@ -200,9 +202,12 @@ public class MainUI extends BaseUI {
                 ru.alex.bookStore.entities.User user = getCurrentLoggedInUser();
                 boolean result = basketService.addItemForUser(user, book);
 
-                if (result)
-                    Notification.show("Book \"" + book.toString() + "\" added to shopping basket",
+                if (result) {
+                    String msg = "Book \"" + book.toString() + "\" added to shopping basket";
+                    Notification.show(msg,
                             Notification.Type.TRAY_NOTIFICATION);
+                    log.info(msg);
+                }
 
                 setShoppingBasketButtonCaption(user);
             }

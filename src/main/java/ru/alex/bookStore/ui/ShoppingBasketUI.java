@@ -6,6 +6,7 @@ import com.vaadin.server.VaadinRequest;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -18,6 +19,7 @@ import java.util.Set;
 
 @SpringUI(path = "/shoppingBasket")
 @Theme("fixed-valo")
+@Slf4j
 public class ShoppingBasketUI extends BaseUI {
 
     @Autowired
@@ -109,9 +111,12 @@ public class ShoppingBasketUI extends BaseUI {
         deleteBookFromBasketButton.addClickListener(event -> {
             boolean result = basketService.deleteBookFromUser(user, book);
 
-            if (result)
-                Notification.show("Book \"" + book.toString() + "\" deleted from shopping basket",
+            if (result) {
+                String msg = "Book \"" + book.toString() + "\" deleted from shopping basket";
+                Notification.show(msg,
                         Notification.Type.TRAY_NOTIFICATION);
+                log.info(msg);
+            }
 
             if (null != shoppingBasketButton)
                 shoppingBasketButton.setCaption("Items: " + basketService.getTotalCountForUser(user) +
