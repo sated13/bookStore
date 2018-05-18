@@ -7,6 +7,7 @@ import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.data.validator.*;
 import com.vaadin.event.LayoutEvents;
 import com.vaadin.server.VaadinRequest;
+import com.vaadin.shared.ui.ValueChangeMode;
 import com.vaadin.shared.ui.datefield.DateResolution;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
@@ -1083,11 +1084,11 @@ public class AdminUI extends BaseUI {
             bookParameters.put("price", priceTextField.getValue().isEmpty() ? 0.0 : conversionService.convert(priceTextField.getValue(), Double.class));
             bookParameters.put("numberOfCopies", numberOfCopiesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfCopiesTextField.getValue(), Integer.class));
 
-            if (pictureOfBookCoverImageUploader.isChanged() && pictureOfBookCoverImageUploader.getOutputStreamForImage().size() > 0) {
-                bookParameters.put("pictureOfBookCover", pictureOfBookCoverImageUploader.getOutputStreamForImage().toByteArray());
-            }
-
             bookButtonClickImpl.doAction(book, bookParameters);
+
+            if (pictureOfBookCoverImageUploader.isChanged() && pictureOfBookCoverImageUploader.getOutputStreamForImage().size() > 0) {
+                bookService.addCoverToBook(book, pictureOfBookCoverImageUploader.getOutputStreamForImage().toByteArray());
+            }
         });
 
         createBookSplitLayout.addComponents(leftPanel, rightPanelCreateBook);

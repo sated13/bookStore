@@ -176,7 +176,7 @@ class BaseUI extends UI {
             Notification.show(msg,
                     Notification.Type.ERROR_MESSAGE);
             log.info(msg + " for user: " + usernameField.getValue());
-            log.debug("Exception: {}", exp);
+            log.error("Exception", exp);
         }
     }
 
@@ -193,7 +193,7 @@ class BaseUI extends UI {
             //redirect to main page
             getPage().setLocation("/main");
         } else {
-            //ToDo: add logging
+            log.debug("Error during registering. Password was null or entered password not equals to confirmation password.");
         }
     }
 

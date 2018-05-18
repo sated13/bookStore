@@ -27,8 +27,8 @@ public class RoleServiceImpl implements RoleService {
                 return true;
             } else return false;
         } catch (Exception e) {
-            log.info("Error during saving role {}: {}", role, e.getMessage());
-            log.debug("Error during saving role {}: {}", role, e);
+            log.debug("Error during saving role {}: {}", role, e.getMessage());
+            log.error("Error during saving role {}", role, e);
             return false;
         }
     }
@@ -38,8 +38,8 @@ public class RoleServiceImpl implements RoleService {
             roleRepository.delete(role);
             return true;
         } catch (Exception e) {
-            log.info("Error during deleting role {}: {}", role, e.getMessage());
-            log.debug("Error during deleting role {}: {}", role, e);
+            log.debug("Error during deleting role {}: {}", role, e.getMessage());
+            log.error("Error during deleting role {}", role, e);
             return false;
         }
     }
@@ -67,8 +67,8 @@ public class RoleServiceImpl implements RoleService {
         try {
             return roleRepository.count();
         } catch (Exception e) {
-            log.info("Error during counting roles: {}", e.getMessage());
-            log.debug("Error during counting roles: {}", e);
+            log.debug("Error during counting roles: {}", e.getMessage());
+            log.error("Error during counting roles", e);
             return 0;
         }
     }
@@ -78,8 +78,8 @@ public class RoleServiceImpl implements RoleService {
         try {
             userRole = roleRepository.findByAuthority(role);
         } catch (Exception e) {
-            log.info("Error during finding role {}: {}", role, e.getMessage());
-            log.debug("Error during finding role {}: {}", role, e);
+            log.debug("Error during finding role {}: {}", role, e.getMessage());
+            log.error("Error during finding role {}", role, e);
         }
         return userRole;
     }
@@ -121,8 +121,8 @@ public class RoleServiceImpl implements RoleService {
                 return false;
             }
         } catch (Exception e) {
-            log.info("Error during changing role {} name to {}: {}", role, roleName, e.getMessage());
-            log.debug("Error during changing role {} name to {}: {}", role, roleName, e);
+            log.debug("Error during changing role {} name to {}: {}", role, roleName, e.getMessage());
+            log.error("Error during changing role {} name to {}", role, roleName, e);
             return false;
         }
     }

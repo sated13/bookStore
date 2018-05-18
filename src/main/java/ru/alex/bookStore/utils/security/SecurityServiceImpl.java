@@ -42,8 +42,8 @@ public class SecurityServiceImpl implements SecurityService {
             }
             log.info("User {} logged in successfully", username);
         } catch (Exception e) {
-            log.info("Error during logging user {}: {}", username, e.getMessage());
-            log.debug("Error during logging user {}: {}", username, e);
+            log.debug("Error during logging user {}: {}", username, e.getMessage());
+            log.error("Error during logging user {}", username, e);
         }
     }
 

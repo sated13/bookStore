@@ -29,8 +29,8 @@ public class CategoryServiceImpl implements CategoryService {
                 return true;
             } else return false;
         } catch (Exception e) {
-            log.info("Error during saving category {}: {}", category, e.getMessage());
-            log.debug("Error during saving category {}: {}", category, e);
+            log.debug("Error during saving category {}: {}", category, e.getMessage());
+            log.error("Error during saving category {}", category, e);
             return false;
         }
     }
@@ -49,8 +49,8 @@ public class CategoryServiceImpl implements CategoryService {
             categoryRepository.delete(category);
             return true;
         } catch (Exception e) {
-            log.info("Error during deleting category {}: {}", category, e.getMessage());
-            log.debug("Error during deleting category {}: {}", category, e);
+            log.debug("Error during deleting category {}: {}", category, e.getMessage());
+            log.error("Error during deleting category {}", category, e);
             return false;
         }
     }
@@ -70,8 +70,8 @@ public class CategoryServiceImpl implements CategoryService {
         try {
             return categoryRepository.count();
         } catch (Exception e) {
-            log.info("Error during counting categories: {}", e.getMessage());
-            log.debug("Error during counting categories: {}", e);
+            log.debug("Error during counting categories: {}", e.getMessage());
+            log.error("Error during counting categories", e);
             return 0;
         }
     }
@@ -81,8 +81,8 @@ public class CategoryServiceImpl implements CategoryService {
         try {
             bookCategory = categoryRepository.findBookCategoryByCategory(category);
         } catch (Exception e) {
-            log.info("Error during finding category {}: {}", category, e.getMessage());
-            log.debug("Error during finding category {}: {}", category, e);
+            log.debug("Error during finding category {}: {}", category, e.getMessage());
+            log.error("Error during finding category {}", category, e);
         }
         return bookCategory;
     }
@@ -122,8 +122,8 @@ public class CategoryServiceImpl implements CategoryService {
                 return false;
             }
         } catch (Exception e) {
-            log.info("Error during changing category {} name to {}: {}", category, newCategoryName, e.getMessage());
-            log.debug("Error during changing category {} name to {}: {}", category, newCategoryName, e);
+            log.debug("Error during changing category {} name to {}: {}", category, newCategoryName, e.getMessage());
+            log.error("Error during changing category {} name to {}", category, newCategoryName, e);
             return false;
         }
     }

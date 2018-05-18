@@ -1,5 +1,6 @@
 package ru.alex.bookStore.utils.users;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,6 +14,7 @@ import ru.alex.bookStore.utils.roles.RoleService;
 import java.util.*;
 
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     @Autowired
@@ -37,8 +39,7 @@ public class UserServiceImpl implements UserService {
                 return true;
             } else return false;
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error during saving user with username {} and roles {}", username, roles, e);
             return false;
         }
     }
@@ -49,8 +50,7 @@ public class UserServiceImpl implements UserService {
             userRepository.delete(user);
             return true;
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error during deleting user by username {}", username, e);
             return false;
         }
     }
@@ -60,8 +60,7 @@ public class UserServiceImpl implements UserService {
             userRepository.delete(user);
             return true;
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error during deleting user {}", user, e);
             return false;
         }
     }
@@ -81,8 +80,7 @@ public class UserServiceImpl implements UserService {
         try {
             user = userRepository.findByUsername(username);
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error during finding user by username {}", username, e);
         }
         return user;
     }
@@ -100,8 +98,7 @@ public class UserServiceImpl implements UserService {
                 }
             }
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error during getting users by usernames {}", userNames, e);
             return null;
         }
 
@@ -154,8 +151,7 @@ public class UserServiceImpl implements UserService {
             userRepository.save(userObject);
             return true;
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error during changing user {} details", user, e);
             return false;
         }
     }
@@ -165,8 +161,7 @@ public class UserServiceImpl implements UserService {
         try {
             return userRepository.findUsersByRolesContains(role);
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error during getting users by role {}", role, e);
             return null;
         }
     }
@@ -185,8 +180,7 @@ public class UserServiceImpl implements UserService {
             }
         }
         catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error during getting users by roles", e);
         }
 
         return resultMap;
@@ -204,8 +198,7 @@ public class UserServiceImpl implements UserService {
             }
         }
         catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error during getting count of users by roles", e);
         }
 
         return resultMap;
@@ -217,8 +210,7 @@ public class UserServiceImpl implements UserService {
             return userRepository.countBooksByRolesContains(role);
         }
         catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error during counting users with role {}", role, e);
             return 0;
         }
     }
@@ -228,8 +220,7 @@ public class UserServiceImpl implements UserService {
         try {
             return userRepository.count();
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error during counting users", e);
             return 0;
         }
     }
@@ -244,8 +235,7 @@ public class UserServiceImpl implements UserService {
                 userRepository.save(user);
                 countOfChangedUsers++;
             } catch (Exception e) {
-                //ToDo: add logging
-                e.printStackTrace();
+                log.error("Error during adding role {} to users {}", role, users, e);
             }
         }
 
@@ -265,8 +255,7 @@ public class UserServiceImpl implements UserService {
                     countOfChangedUsers++;
                 }
             } catch (Exception e) {
-                //ToDo: add logging
-                e.printStackTrace();
+                log.error("Error during setting role {} for users {}", role, users, e);
             }
         }
 

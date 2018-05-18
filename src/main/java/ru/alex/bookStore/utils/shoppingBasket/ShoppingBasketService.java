@@ -1,5 +1,6 @@
 package ru.alex.bookStore.utils.shoppingBasket;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.alex.bookStore.entities.Book;
 import ru.alex.bookStore.entities.User;
@@ -12,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
+@Slf4j
 public class ShoppingBasketService {
 
     private Map<User, Set<BasketItem>> basketItems = new ConcurrentHashMap<>();
@@ -45,8 +47,7 @@ public class ShoppingBasketService {
             }
             return true;
         } catch (Exception e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error during adding item {} to user {} basket", book, user, e);
             return false;
         }
     }

@@ -35,22 +35,11 @@ public class BookServiceImpl implements BookService {
 
         log.debug("save Book method, bookParameters: {}", bookParameters);
         try {
-            Cover cover = coverService.createEmptyCover();
-            newBook.setPictureOfBookCover(cover);
             newBook.setAddingDay(LocalDate.now());
-            coverService.save(cover);
             bookRepository.save(newBook);
-            coverService.setBookId(cover, newBook.getID());
-
-            if (bookParameters.containsKey("pictureOfBookCover")) {
-                cover.setPictureOfBookCover((byte[]) bookParameters.get("pictureOfBookCover"));
-                cover.setPresented(true);
-            }
-
-            coverService.save(cover);
         } catch (Exception e) {
-            log.info("Error during book saving: {}", e.getMessage());
-            log.debug("Error during book saving: {}\nwith parameters: {}", e, bookParameters);
+            log.debug("Error during book saving: {}", e.getMessage());
+            log.error("Error during book saving with parameters: {}", bookParameters, e);
             return false;
         }
 
@@ -63,8 +52,8 @@ public class BookServiceImpl implements BookService {
             bookRepository.delete(book);
             return true;
         } catch (Exception e) {
-            log.info("Error during book deleting: {}", e.getMessage());
-            log.debug("Error during book deleting: {}", e);
+            log.debug("Error during book deleting: {}", e.getMessage());
+            log.error("Error during book deleting", e);
             return false;
         }
     }
@@ -93,8 +82,8 @@ public class BookServiceImpl implements BookService {
                 resultMap.put(category, setOfBooksForCategory);
             }
         } catch (Exception e) {
-            log.info("Error during getting books by categories: {}", e.getMessage());
-            log.debug("Error during getting books by categories: {}", e);
+            log.debug("Error during getting books by categories: {}", e.getMessage());
+            log.error("Error during getting books by categories", e);
         }
 
         return resultMap;
@@ -105,8 +94,8 @@ public class BookServiceImpl implements BookService {
         try {
             return bookRepository.countBooksByCategoriesContains(category);
         } catch (Exception e) {
-            log.info("Error during counting books with category {}: {}", category, e.getMessage());
-            log.debug("Error during counting books with category {}: {}", category, e);
+            log.debug("Error during counting books with category {}: {}", category, e.getMessage());
+            log.error("Error during counting books with category {}", category, e);
             return 0;
         }
     }
@@ -122,8 +111,8 @@ public class BookServiceImpl implements BookService {
                 resultMap.put(category, bookRepository.countBooksByCategoriesContains(category));
             }
         } catch (Exception e) {
-            log.info("Error during counting books by categories: {}", e.getMessage());
-            log.debug("Error during counting books by categories: {}", e);
+            log.debug("Error during counting books by categories: {}", e.getMessage());
+            log.error("Error during counting books by categories", e);
         }
 
         return resultMap;
@@ -134,8 +123,8 @@ public class BookServiceImpl implements BookService {
         try {
             return bookRepository.count();
         } catch (Exception e) {
-            log.info("Error during counting books: {}", e.getMessage());
-            log.debug("Error during counting books: {}", e);
+            log.debug("Error during counting books: {}", e.getMessage());
+            log.error("Error during counting books", e);
             return 0;
         }
     }
@@ -183,8 +172,8 @@ public class BookServiceImpl implements BookService {
             bookRepository.save(book);
             return true;
         } catch (Exception e) {
-            log.info("Error during changing book details: {}\n{}\n{}", book, bookParameters, e.getMessage());
-            log.debug("Error during changing book details: {}\n{}\n{}", book, bookParameters, e);
+            log.debug("Error during changing book details: {}\n{}\n{}", book, bookParameters, e.getMessage());
+            log.error("Error during changing book details: {}\n{}", book, bookParameters, e);
             return false;
         }
     }
@@ -194,8 +183,8 @@ public class BookServiceImpl implements BookService {
         try {
             return bookRepository.findBooksByCategoriesContains(category);
         } catch (Exception e) {
-            log.info("Error during finding book by category {}: {}", category, e.getMessage());
-            log.debug("Error during finding book by category {}: {}", category, e);
+            log.debug("Error during finding book by category {}: {}", category, e.getMessage());
+            log.error("Error during finding book by category {}", category, e);
             return null;
         }
     }
@@ -205,8 +194,8 @@ public class BookServiceImpl implements BookService {
         try {
             return bookRepository.findTop10ByOrderByAddingDayDesc();
         } catch (Exception e) {
-            log.info("Error during finding top 10 books: {}", e.getMessage());
-            log.debug("Error during finding top 10 books: {}", e);
+            log.debug("Error during finding top 10 books: {}", e.getMessage());
+            log.error("Error during finding top 10 books", e);
             return null;
         }
     }
@@ -216,8 +205,8 @@ public class BookServiceImpl implements BookService {
         try {
             return bookRepository.findTop10ByOrderByCountOfSoldItemsDesc();
         } catch (Exception e) {
-            log.info("Error during finding top 10 books ordered by count of sold items: {}", e.getMessage());
-            log.debug("Error during finding top 10 books ordered by count of sold items: {}", e);
+            log.debug("Error during finding top 10 books ordered by count of sold items: {}", e.getMessage());
+            log.error("Error during finding top 10 books ordered by count of sold items", e);
             return null;
         }
     }
@@ -277,12 +266,33 @@ public class BookServiceImpl implements BookService {
                 bookRepository.save(book);
                 countOfChangedBooks++;
             } catch (Exception e) {
-                log.info("Error during adding category {} to book {}: {}", category, book, e.getMessage());
-                log.debug("Error during adding category {} to book {}: {}", category, book, e);
+                log.debug("Error during adding category {} to book {}: {}", category, book, e.getMessage());
+                log.error("Error during adding category {} to book {}", category, book, e);
             }
         }
 
         return countOfChangedBooks;
+    }
+
+    @Override
+    public boolean addCoverToBook(Book book, byte[] pictureBytes) {
+        try {
+            Cover cover = coverService.createEmptyCover();
+            //coverService.save(cover);
+            coverService.setBookId(cover, book.getID());
+
+            cover.setPictureOfBookCover(pictureBytes);
+            cover.setPresented(true);
+
+            coverService.save(cover);
+
+            book.setPictureOfBookCover(cover);
+            bookRepository.save(book);
+            return true;
+        } catch (Exception e) {
+            //ToDo exception
+            return false;
+        }
     }
 
     @Override
@@ -298,8 +308,8 @@ public class BookServiceImpl implements BookService {
                     countOfChangedBooks++;
                 }
             } catch (Exception e) {
-                log.info("Error during setting category {} for book {}: {}", category, book, e.getMessage());
-                log.debug("Error during setting category {} for book {}: {}", category, book, e);
+                log.debug("Error during setting category {} for book {}: {}", category, book, e.getMessage());
+                log.error("Error during setting category {} for book {}", category, book, e);
             }
         }
 

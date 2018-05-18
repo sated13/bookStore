@@ -108,7 +108,7 @@ public class ImageUploader extends CustomComponent implements Upload.Receiver, U
             outputStreamForImage.reset();
             outputStreamForImage.write(bytes);
         } catch (IOException e) {
-            //ToDo" add logging
+            //ToDo: add logging
             e.printStackTrace();
         }
     }

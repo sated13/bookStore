@@ -38,6 +38,8 @@ public interface BookService {
 
     int addCategoryToBooks(BookCategory category, Set<Book> books);
 
+    boolean addCoverToBook(Book book, byte[] pictureBytes);
+
     /**
      * Set category only on books from Set
      * @param category  role for users

@@ -3,6 +3,7 @@ package ru.alex.bookStore.entities;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.imageio.ImageIO;
 import javax.persistence.*;
@@ -15,6 +16,7 @@ import java.io.IOException;
 @Entity
 @Table(name = "covers")
 @NoArgsConstructor
+@Slf4j
 public class Cover {
 
     @Id
@@ -47,8 +49,7 @@ public class Cover {
                 ImageIO.write(cover, "jpg", byteArrayOutputStream);
                 pictureOfBookCover = byteArrayOutputStream.toByteArray();
             } catch (IOException e) {
-                //ToDo: add logging
-                e.printStackTrace();
+                log.error("Error during getting book cover", e);
             }
         }
         return pictureOfBookCover;
@@ -64,8 +65,7 @@ public class Cover {
                 BufferedImage cover = ImageIO.read(byteArrayInputStream);
                 ImageIO.write(cover, "jpg", new File(location + "books_covers" + File.separator + fileName));
             } catch (IOException e) {
-                //ToDo: add logging
-                e.printStackTrace();
+                log.error("Error during saving book cover", e);
             }
         }
     }

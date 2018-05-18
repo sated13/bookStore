@@ -18,11 +18,11 @@ public class CoverServiceImpl implements CoverService {
     @Override
     public boolean save(Cover cover) {
         try {
-            coverRepository.save(cover);
+            //coverRepository.save(cover);
             return true;
         } catch (Exception e) {
-            log.info("Error during saving cover {}: {}", cover, e.getMessage());
-            log.debug("Error during saving cover {}: {}", cover, e);
+            log.debug("Error during saving cover {}: {}", cover, e.getMessage());
+            log.error("Error during saving cover {}", cover, e);
             return false;
         }
     }
