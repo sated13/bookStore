@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.alex.bookStore.entities.Book;
+import ru.alex.bookStore.utils.cover.CoverUtils;
 import ru.alex.bookStore.utils.shoppingBasket.ShoppingBasketService;
 import ru.alex.bookStore.utils.users.UserService;
 
@@ -20,6 +21,8 @@ public class UiUtils {
     ShoppingBasketService basketService;
     @Autowired
     UserService userService;
+    @Autowired
+    CoverUtils coverUtils;
 
     public FormLayout createLayoutForBookDetails(@NotNull Book book, @NotNull AbstractOrderedLayout layout) {
         FormLayout bookDetailsLayout = new FormLayout();
@@ -39,14 +42,14 @@ public class UiUtils {
 
         if (null != book.getPictureOfBookCover() &&
                 book.getPictureOfBookCover().isPresented()) {
-            pictureOfBookCoverImageUploader.setOutputStreamForImage(book.getPictureOfBookCover().getPictureOfBookCover());
+            pictureOfBookCoverImageUploader.setOutputStreamForImage(coverUtils.getPictureOfBookCover(book.getPictureOfBookCover()));
             pictureOfBookCoverImageUploader.resetProgressbar();
             pictureOfBookCoverImageUploader.showImage();
 
             Image coverImage = new Image();
 
             StreamResource.StreamSource streamResource = (StreamResource.StreamSource)
-                    () -> new ByteArrayInputStream(book.getPictureOfBookCover().getPictureOfBookCover());
+                    () -> new ByteArrayInputStream(coverUtils.getPictureOfBookCover(book.getPictureOfBookCover()));
 
             if (coverImage.getSource() == null) {
                 coverImage.setSource(new StreamResource(streamResource, ""));

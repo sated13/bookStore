@@ -18,19 +18,23 @@ public class CoverServiceImpl implements CoverService {
     @Override
     public boolean save(Cover cover) {
         try {
-            //coverRepository.save(cover);
+            coverRepository.save(cover);
             return true;
         } catch (Exception e) {
-            log.debug("Error during saving cover {}: {}", cover, e.getMessage());
-            log.error("Error during saving cover {}", cover, e);
+            log.error("Error during saving cover {}: {}", cover, e);
             return false;
         }
     }
 
     @Override
-    public boolean delete(byte[] cover) {
-        //TODO: add code for deleting cover
-        return false;
+    public boolean delete(Cover cover) {
+        try {
+            coverRepository.delete(cover);
+            return true;
+        } catch (Exception e) {
+            log.error("Error during deleting cover {}: {}", cover, e);
+            return false;
+        }
     }
 
     public Cover createEmptyCover() {

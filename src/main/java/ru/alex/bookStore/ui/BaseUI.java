@@ -169,14 +169,14 @@ class BaseUI extends UI {
                 String msg = "Wrong credentials!";
                 Notification.show(msg,
                         Notification.Type.ERROR_MESSAGE);
-                log.info(msg + " for user: " + usernameField.getValue());
+                log.info("{} for user: {}", msg, usernameField.getValue());
             }
         } catch (Exception exp) {
             String msg = "Wrong credentials!";
             Notification.show(msg,
                     Notification.Type.ERROR_MESSAGE);
-            log.info(msg + " for user: " + usernameField.getValue());
-            log.error("Exception", exp);
+            log.info("{} for user: {}", msg, usernameField.getValue());
+            log.error("Exception: {}", exp);
         }
     }
 

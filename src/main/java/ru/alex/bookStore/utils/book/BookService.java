@@ -8,7 +8,7 @@ import java.util.Set;
 
 public interface BookService {
 
-    boolean save(Map<String, Object> bookParameters);
+    Book save(Map<String, Object> bookParameters);
 
     boolean delete(Book book);
 

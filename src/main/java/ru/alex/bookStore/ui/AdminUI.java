@@ -7,7 +7,6 @@ import com.vaadin.data.provider.ListDataProvider;
 import com.vaadin.data.validator.*;
 import com.vaadin.event.LayoutEvents;
 import com.vaadin.server.VaadinRequest;
-import com.vaadin.shared.ui.ValueChangeMode;
 import com.vaadin.shared.ui.datefield.DateResolution;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
@@ -18,6 +17,7 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import ru.alex.bookStore.entities.*;
+import ru.alex.bookStore.utils.cover.CoverUtils;
 import ru.alex.bookStore.utils.ui.ComponentValueValidation;
 import ru.alex.bookStore.utils.book.BookService;
 import ru.alex.bookStore.utils.bookCategory.CategoryService;
@@ -61,6 +61,8 @@ public class AdminUI extends BaseUI {
     private final String rolesCaption = "Roles";
     private final String booksCaption = "Books";
     private final String categoriesCaption = "Categories";
+    @Autowired
+    CoverUtils coverUtils;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -385,6 +387,7 @@ public class AdminUI extends BaseUI {
 
                     confirmDialogWindow.center();
                     addWindow(confirmDialogWindow);
+                    return book;
                 });
 
         bookDetailsWindow.setContent(bookDetailsLayout);
@@ -542,15 +545,18 @@ public class AdminUI extends BaseUI {
 
         FormLayout createBookLayout = createLayoutForBookParameters(null, "Create",
                 (book, bookParameters) -> {
-                    Boolean resultOfOperation = bookService.save(bookParameters);
+                    Book createdBook = bookService.save(bookParameters);
                     String bookTitle = (String) bookParameters.get("bookTitle");
                     String authors = StringUtils.collectionToDelimitedString((Set<String>) bookParameters.get("authors"), ", ");
 
-                    String msg = "Book \"" + bookTitle + " " + authors +
-                            ((resultOfOperation) ? "\" created." : " didn't created.");
-                    Notification.show(msg,
+                    StringBuilder msg = new StringBuilder();
+                    msg.append("Book \"").append(bookTitle).append(" ").append(authors).append((null != createdBook) ? "\" created." : " didn't created.");
+
+                    Notification.show(msg.toString(),
                             Notification.Type.TRAY_NOTIFICATION);
-                    log.info(msg);
+                    log.info(msg.toString());
+
+                    return createdBook;
                 });
 
         window.setContent(createBookLayout);
@@ -944,7 +950,7 @@ public class AdminUI extends BaseUI {
                     LocalDate parsedAtServer = LocalDate.parse(dateString, DateTimeFormatter.ofPattern("yyyy"));
                     return Result.ok(parsedAtServer);
                 } catch (DateTimeParseException e) {
-                    e.printStackTrace();
+                    log.error("Error with date: {}", e);
                     return Result.error("Bad date");
                 }
             }
@@ -971,7 +977,7 @@ public class AdminUI extends BaseUI {
         pictureOfBookCoverImageUploader.setWidth(100f, Unit.PERCENTAGE);
         if (!bookIsNull && null != book.getPictureOfBookCover() &&
                 book.getPictureOfBookCover().isPresented()) {
-            pictureOfBookCoverImageUploader.setOutputStreamForImage(book.getPictureOfBookCover().getPictureOfBookCover());
+            pictureOfBookCoverImageUploader.setOutputStreamForImage(coverUtils.getPictureOfBookCover(book.getPictureOfBookCover()));
             pictureOfBookCoverImageUploader.setFilename(book.getPictureOfBookCover().getFileName());
             pictureOfBookCoverImageUploader.resetProgressbar();
             pictureOfBookCoverImageUploader.showImage();
@@ -1084,10 +1090,10 @@ public class AdminUI extends BaseUI {
             bookParameters.put("price", priceTextField.getValue().isEmpty() ? 0.0 : conversionService.convert(priceTextField.getValue(), Double.class));
             bookParameters.put("numberOfCopies", numberOfCopiesTextField.getValue().isEmpty() ? 0 : conversionService.convert(numberOfCopiesTextField.getValue(), Integer.class));
 
-            bookButtonClickImpl.doAction(book, bookParameters);
+            Book newBook = bookButtonClickImpl.doAction(book, bookParameters);
 
-            if (pictureOfBookCoverImageUploader.isChanged() && pictureOfBookCoverImageUploader.getOutputStreamForImage().size() > 0) {
-                bookService.addCoverToBook(book, pictureOfBookCoverImageUploader.getOutputStreamForImage().toByteArray());
+            if (null != newBook && pictureOfBookCoverImageUploader.isChanged() && pictureOfBookCoverImageUploader.getOutputStreamForImage().size() > 0) {
+                bookService.addCoverToBook(newBook, pictureOfBookCoverImageUploader.getOutputStreamForImage().toByteArray());
             }
         });
 
@@ -1226,7 +1232,7 @@ public class AdminUI extends BaseUI {
     }
 
     private interface BookButtonClick {
-        void doAction(Book book, Map<String, Object> bookParameters);
+        Book doAction(Book book, Map<String, Object> bookParameters);
     }
 
     private interface UserButtonClick {

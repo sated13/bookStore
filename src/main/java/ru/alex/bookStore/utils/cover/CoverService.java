@@ -6,7 +6,7 @@ public interface CoverService {
 
     boolean save(Cover cover);
 
-    boolean delete(byte[] cover);
+    boolean delete(Cover cover);
 
     Cover createEmptyCover();
 

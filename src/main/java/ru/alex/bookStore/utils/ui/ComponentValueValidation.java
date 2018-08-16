@@ -6,8 +6,10 @@ import com.vaadin.data.ValueContext;
 import com.vaadin.server.UserError;
 import com.vaadin.ui.AbstractComponent;
 import com.vaadin.ui.AbstractField;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.ConversionService;
 
+@Slf4j
 public class ComponentValueValidation {
 
     @SuppressWarnings("unchecked")
@@ -24,9 +26,8 @@ public class ComponentValueValidation {
                 } else {
                     field.setComponentError(null);
                 }
-            }
-            catch (Exception e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                log.debug("Error during validating: {}", e);
                 UserError error = new UserError("Wrong value");
                 field.setComponentError(error);
             }
@@ -34,14 +35,13 @@ public class ComponentValueValidation {
     }
 
     public static boolean addErrorOnComponent(AbstractComponent componentForAddingError, boolean resultOfValidation,
-                                                  String errorMessage) {
+                                              String errorMessage) {
         boolean returningResult = false;
         if (resultOfValidation) {
             UserError error = new UserError(errorMessage);
             componentForAddingError.setComponentError(error);
             returningResult = true;
-        }
-        else {
+        } else {
             componentForAddingError.setComponentError(null);
             returningResult = false;
         }

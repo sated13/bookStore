@@ -47,7 +47,7 @@ public class ShoppingBasketService {
             }
             return true;
         } catch (Exception e) {
-            log.error("Error during adding item {} to user {} basket", book, user, e);
+            log.error("Error during adding item {} to user {} basket: {}", book, user, e);
             return false;
         }
     }

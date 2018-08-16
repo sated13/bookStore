@@ -2,6 +2,7 @@ package ru.alex.bookStore.utils.ui;
 
 import com.vaadin.server.StreamResource;
 import com.vaadin.ui.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -10,6 +11,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 
+@Slf4j
 public class ImageUploader extends CustomComponent implements Upload.Receiver, Upload.SucceededListener,
         Upload.FailedListener, Upload.ProgressListener {
 
@@ -108,8 +110,7 @@ public class ImageUploader extends CustomComponent implements Upload.Receiver, U
             outputStreamForImage.reset();
             outputStreamForImage.write(bytes);
         } catch (IOException e) {
-            //ToDo: add logging
-            e.printStackTrace();
+            log.error("Error: {}", e);
         }
     }
 
